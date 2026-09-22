@@ -1,0 +1,377 @@
+:root {
+  --fg: #16233a;
+  --muted: #5b6b80;
+  --line: #dbe4f0;
+  --accent: #1d4ed8;
+  --accent-dark: #1e3a8a;
+  --accent-light: #eef3ff;
+  --today: #ea580c;
+  --bg: #ffffff;
+  --danger: #b91c1c;
+  --success: #15803d;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  color: var(--fg);
+  background: var(--bg);
+  font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+header {
+  background: var(--accent-dark);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .75rem;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  font-weight: 700;
+  text-decoration: none;
+  color: #fff;
+  font-size: 1.05rem;
+}
+.brand .logo { height: 52px; width: 52px; display: block; object-fit: contain; background: #fff; border-radius: 50%; }
+
+.bottom-bars {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  box-shadow: 0 -2px 8px rgba(0,0,0,.12);
+}
+.site-nav { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0; padding: 0; }
+.site-nav a {
+  padding: .3rem .7rem;
+  border: 1px solid rgba(255,255,255,.6);
+  border-radius: 999px;
+  font-size: .88rem;
+  color: rgba(255,255,255,.9);
+  text-decoration: none;
+}
+.site-nav a:hover { border-color: #fff; color: #fff; }
+.site-nav a.nav-cta { background: #fff; color: var(--accent-dark); border-color: #fff; font-weight: 600; }
+.site-nav a.nav-cta:hover { background: var(--accent-light); }
+
+main { flex: 1 0 auto; width: 100%; max-width: 1140px; margin: 0 auto; padding: 1.75rem 1.25rem; }
+.search { display: flex; gap: .5rem; margin-bottom: 1.4rem; max-width: 28rem; }
+.search input[type="search"] {
+  flex: 1;
+  padding: .5rem .7rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: inherit;
+  color: var(--fg);
+}
+.search input[type="search"]:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.search button {
+  padding: .5rem 1rem;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.search button:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+.search-clear { align-self: center; font-size: .85rem; white-space: nowrap; }
+h1 { font-size: 1.45rem; margin: 0 0 1.1rem; color: var(--accent-dark); }
+h2 { font-size: 1.05rem; margin: 1.5rem 0 .5rem; font-weight: 600; }
+a { color: var(--accent); }
+table { width: 100%; border-collapse: collapse; font-size: .89rem; line-height: 1.3; }
+th, td { text-align: left; padding: .4rem .5rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+tbody tr:hover { background: var(--accent-light); }
+tbody tr.is-highlighted { background: var(--accent-light); }
+.nowrap { white-space: nowrap; }
+.empty { color: var(--muted); }
+dl.meta { display: grid; grid-template-columns: 8.5rem 1fr; gap: .4rem 1rem; margin: 0 0 1.75rem; }
+dl.meta dt { color: var(--muted); font-size: .85rem; }
+dl.meta dd { margin: 0; }
+footer { border-top: 1px solid var(--line); padding: 1rem 1.25rem; color: var(--muted); font-size: .84rem; }
+footer a { color: var(--accent-dark); }
+
+/* status badges --------------------------------------------------------------- */
+.tag {
+  display: none;
+  margin-left: .4rem;
+  padding: .08rem .42rem;
+  border-radius: 3px;
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  vertical-align: 1px;
+}
+tr.is-finished .tag-done { display: inline-block; background: #ececec; color: #6b6b6b; }
+.tag-live { display: inline-block; background: var(--accent); color: #fff; }
+
+tr.is-finished td, tr.is-finished a { color: var(--muted); }
+tr.is-finished a { text-decoration: none; }
+tr.is-finished:hover { background: #fafafa; }
+
+.archive { margin-top: 1.5rem; border-top: 1px solid var(--line); padding-top: .75rem; }
+.archive summary { cursor: pointer; font-size: 1.05rem; font-weight: 600; color: var(--muted); }
+.archive table { margin-top: .9rem; }
+
+.banner {
+  margin: 0 0 1.1rem;
+  padding: .5rem .8rem;
+  border-left: 3px solid var(--line);
+  background: #f7f7f7;
+  color: var(--muted);
+  font-size: .9rem;
+}
+.banner-live { border-left-color: var(--accent); color: var(--accent-dark); background: var(--accent-light); }
+article.is-finished h1 { color: var(--muted); }
+
+.links { font-size: .82rem; display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; }
+.links a { white-space: nowrap; }
+.btn-share { border: none; font: inherit; font-size: .82rem; padding: .3rem .8rem; cursor: pointer; }
+
+/* forms ------------------------------------------------------------------------ */
+.notice {
+  padding: .6rem .8rem;
+  background: var(--accent-light);
+  border-left: 3px solid var(--accent);
+  color: var(--accent-dark);
+  font-size: .9rem;
+  border-radius: 2px;
+}
+.form { max-width: 32rem; }
+.field { margin-bottom: 1rem; }
+.field label { display: block; font-size: .85rem; font-weight: 600; margin-bottom: .3rem; }
+.field input, .field textarea, .field select,
+form select {
+  width: 100%;
+  padding: .5rem .6rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: inherit;
+  color: var(--fg);
+}
+.field input:focus, .field textarea:focus, .field select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+fieldset { border: 1px solid var(--line); border-radius: 6px; padding: .9rem 1rem 0.2rem; margin: 1.2rem 0; }
+legend { font-size: .82rem; color: var(--muted); padding: 0 .4rem; }
+.error { color: var(--danger); font-size: .82rem; margin: .25rem 0 0; }
+.honeypot { position: absolute; left: -9999px; top: -9999px; }
+button[type="submit"] {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: .65rem 1.4rem;
+  border-radius: 5px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+button[type="submit"]:hover { background: var(--accent-dark); }
+
+/* admin ------------------------------------------------------------------------ */
+body.has-admin-nav main { padding-bottom: 5.5rem; }
+.admin-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: .7rem 1.25rem;
+  background: var(--accent-dark);
+  border-top: 1px solid rgba(255,255,255,.15);
+}
+.admin-nav a, .admin-nav .link-btn {
+  padding: .3rem .7rem;
+  border: 1px solid rgba(255,255,255,.6);
+  border-radius: 999px;
+  font-size: .88rem;
+  color: rgba(255,255,255,.9);
+  text-decoration: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+.admin-nav a:hover, .admin-nav .link-btn:hover { border-color: #fff; color: #fff; }
+.admin-nav .btn { background: #fff; color: var(--accent-dark); border-color: #fff; font-weight: 600; }
+.admin-nav .btn:hover { background: var(--accent-light); }
+.btn {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  padding: .5rem 1rem;
+  border-radius: 5px;
+  font-weight: 600;
+  font-size: .88rem;
+  text-decoration: none;
+}
+.btn:hover { background: var(--accent-dark); }
+form.inline { display: inline; }
+button.link-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-decoration: underline;
+}
+button.link-btn.reject { color: var(--danger); }
+button.link-btn.approve { color: var(--success); }
+.actions a, .actions form { margin-right: .6rem; }
+.status { padding: .1rem .5rem; border-radius: 999px; font-size: .72rem; text-transform: uppercase; }
+.status-pending { background: #fef3c7; color: #92400e; }
+.status-approved { background: #dcfce7; color: var(--success); }
+.status-rejected { background: #fee2e2; color: var(--danger); }
+
+@media (max-width: 640px) {
+  .tournament-table, .tournament-table thead, .tournament-table tbody,
+  .tournament-table tr, .tournament-table td { display: block; }
+  .tournament-table thead { display: none; }
+  .tournament-table tr { border-bottom: 1px solid var(--line); padding: .5rem 0; }
+  .tournament-table td { border: 0; padding: .15rem .5rem; }
+  .tournament-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--muted);
+  }
+  dl.meta { grid-template-columns: 1fr; }
+}
+
+/* calendar district filters ------------------------------------------------------ */
+.calendar-filters { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 1.4rem; }
+.calendar-filters a {
+  padding: .3rem .75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: .85rem;
+  color: var(--fg);
+  text-decoration: none;
+}
+.calendar-filters a:hover { border-color: var(--accent); color: var(--accent); }
+.calendar-filters a.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+/* year calendar ----------------------------------------------------------------- */
+.year-calendar {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1.5rem 1rem;
+  margin-top: 1rem;
+}
+.mini-month { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: .72rem; }
+.mini-month caption {
+  caption-side: top;
+  text-align: left;
+  font-weight: 700;
+  font-size: .78rem;
+  letter-spacing: .04em;
+  color: var(--accent-dark);
+  margin-bottom: .35rem;
+}
+.mini-month th { color: var(--muted); font-weight: 600; padding: .12rem 0; text-align: center; }
+.mini-month td { text-align: center; padding: .1rem 0; color: var(--muted); vertical-align: middle; }
+.mini-month td.has-tournament { position: relative; }
+
+.mini-month td .day-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6em;
+  height: 1.6em;
+  border-radius: 50%;
+  color: inherit;
+  transition: transform .12s ease, background-color .12s ease;
+}
+.mini-month td.has-tournament .day-num { background: var(--accent); color: #fff; font-weight: 700; }
+
+/* Synced with the table below: hovering a tournament row highlights its
+   day here, and vice versa (see the script at the bottom of calendar.html). */
+.mini-month td.is-highlighted .day-num {
+  transform: scale(1.25);
+  background: var(--accent-dark);
+}
+.mini-month td.is-today.is-highlighted .day-num { background: #c2410c; }
+
+/* Wrapper on every real day cell (tournament or not), so the marks row
+   below is always reserved at the same height and row alignment never
+   depends on how many days in that row happen to have tournaments.
+   display:flex (not inline-flex) lets it fill the td's own width, which
+   also maximises the tap target in an already-tiny ~20-28px cell. */
+.mini-month td .day-cell,
+.mini-month td a.day-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1px;
+  width: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+.mini-month td a.day-link:hover .day-num { background: var(--accent-dark); }
+
+/* One mark per tournament: each tournament actually gets its own small
+   visible bar instead of being collapsed into a count digit or a colour
+   ring too thin to read. Capped at 4 individual marks; 5+ shows 3 marks
+   + "+N" so the row never grows taller or wraps. Height is fixed (5px)
+   and reserved on every cell so it can never shift row heights, even at
+   the 2-per-row mobile breakpoint. Purely decorative (aria-hidden) --
+   the full list lives in the link's title/aria-label. */
+.mini-month td .day-marks {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5px;
+  height: 5px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.mini-month td .day-marks .mark {
+  flex: 0 0 auto;
+  width: 2px;
+  height: 4px;
+  border-radius: 1px;
+  background: var(--accent-dark);
+}
+.mini-month td .day-marks .mark-more {
+  flex: 0 0 auto;
+  margin-left: 1px;
+  font-size: .58em;
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.mini-month td.is-today .day-num {
+  font-weight: 700;
+  background: var(--today);
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, .3);
+}
+.mini-month td.is-today.has-tournament .day-num {
+  background: var(--today);
+  color: #fff;
+  box-shadow: inset 0 0 0 2px #fff, 0 0 0 3px rgba(234, 88, 12, .3);
+}
+
+@media (max-width: 900px) {
+  .year-calendar { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 560px) {
+  .year-calendar { grid-template-columns: repeat(2, 1fr); gap: 1.25rem .6rem; }
+  .mini-month { font-size: .68rem; }
+  .mini-month td .day-marks .mark { width: 1.5px; height: 3px; }
+}

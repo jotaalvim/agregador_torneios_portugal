@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Login | Torneios Xadrez Norte{% endblock %}
+{% block content %}
+<h1>Area de administracao</h1>
+<form method="post" action="/admin/login" class="form">
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <div class="field">
+    <label for="username">Utilizador</label>
+    <input type="text" id="username" name="username" autocomplete="username" required>
+  </div>
+  <div class="field">
+    <label for="password">Palavra-passe</label>
+    <input type="password" id="password" name="password" autocomplete="current-password" required>
+  </div>
+  <button type="submit">Entrar</button>
+</form>
+{% endblock %}

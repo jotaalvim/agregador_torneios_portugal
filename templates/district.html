@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Torneios: {{ district }} | Torneios Xadrez Norte{% endblock %}
+{% block og_title %}Torneios de xadrez: {{ district }}{% endblock %}
+{% block description %}Calendario de torneios de xadrez no distrito de {{ district }}, Norte de Portugal.{% endblock %}
+{% block content %}
+<h1>{{ district }}</h1>
+
+<form class="search" method="get" action="/distrito/{{ request.path_params.slug }}" role="search">
+  <input type="search" name="q" value="{{ q }}" placeholder="Pesquisar por nome, local ou clube&hellip;" aria-label="Pesquisar torneios">
+  <button type="submit">Pesquisar</button>
+  {% if q %}<a class="search-clear" href="/distrito/{{ request.path_params.slug }}">Limpar</a>{% endif %}
+</form>
+
+<h2>Proximos</h2>
+{% if upcoming %}
+<table class="tournament-table">
+  <thead>
+    <tr><th>Data</th><th>Torneio</th><th>Local</th><th>Ritmo</th><th>Link</th></tr>
+  </thead>
+  <tbody>
+    {% for t in upcoming %}{% include "row.html" %}{% endfor %}
+  </tbody>
+</table>
+{% elif q %}
+<p class="empty">Sem torneios proximos para &ldquo;{{ q }}&rdquo;.</p>
+{% else %}
+<p class="empty">Sem torneios agendados neste distrito.</p>
+{% endif %}
+
+{% if past %}
+<details class="archive">
+  <summary>Terminados</summary>
+  <table class="tournament-table">
+    <thead>
+      <tr><th>Data</th><th>Torneio</th><th>Local</th><th>Ritmo</th><th>Link</th></tr>
+    </thead>
+    <tbody>
+      {% for t in past %}{% include "row.html" %}{% endfor %}
+    </tbody>
+  </table>
+</details>
+{% endif %}
+
+<p class="links"><a href="/calendario.ics?distrito={{ request.path_params.slug }}">Subscrever calendario (.ics)</a></p>
+{% endblock %}

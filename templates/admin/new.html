@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Novo torneio | Torneios Xadrez Norte{% endblock %}
+{% block body_class %}has-admin-nav{% endblock %}
+{% block admin_nav %}{% include "admin/_nav.html" %}{% endblock %}
+{% block content %}
+<h1>Novo torneio</h1>
+
+<form method="post" action="/admin/tournaments/new" class="form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+  <div class="field">
+    <label for="status">Estado</label>
+    <select id="status" name="status">
+      {% for s in ["pending", "approved", "rejected"] %}
+      <option value="{{ s }}" {% if values.status == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    {% if errors.status %}<p class="error">{{ errors.status }}</p>{% endif %}
+  </div>
+
+  <div class="field">
+    <label for="title">Nome do torneio *</label>
+    <input type="text" id="title" name="title" value="{{ values.title or '' }}" required>
+    {% if errors.title %}<p class="error">{{ errors.title }}</p>{% endif %}
+  </div>
+
+  <div class="field">
+    <label for="district">Distrito *</label>
+    <input type="text" id="district" name="district" list="district-options" value="{{ values.district or '' }}" required>
+    <datalist id="district-options">
+      {% for d in districts %}<option value="{{ d.name }}">{% endfor %}
+    </datalist>
+    {% if errors.district %}<p class="error">{{ errors.district }}</p>{% endif %}
+  </div>
+
+  <div class="field">
+    <label for="date">Data *</label>
+    <input type="date" id="date" name="date" value="{{ values.date or '' }}" required>
+    {% if errors.date %}<p class="error">{{ errors.date }}</p>{% endif %}
+  </div>
+
+  <div class="field">
+    <label for="location">Local *</label>
+    <input type="text" id="location" name="location" value="{{ values.location or '' }}" required>
+    {% if errors.location %}<p class="error">{{ errors.location }}</p>{% endif %}
+  </div>
+
+  <div class="field">
+    <label for="time_control">Ritmo de jogo *</label>
+    <input type="text" id="time_control" name="time_control" placeholder="ex: 90' + 30''/lance, 9 rondas" value="{{ values.time_control or '' }}" required>
+    {% if errors.time_control %}<p class="error">{{ errors.time_control }}</p>{% endif %}
+  </div>
+
+  <div class="field">
+    <label for="organizer">Organizacao</label>
+    <input type="text" id="organizer" name="organizer" value="{{ values.organizer or '' }}">
+  </div>
+
+  <div class="field">
+    <label for="chess_results_url">Link chess-results.com</label>
+    <input type="url" id="chess_results_url" name="chess_results_url" placeholder="https://chess-results.com/..." value="{{ values.chess_results_url or '' }}">
+    {% if errors.chess_results_url %}<p class="error">{{ errors.chess_results_url }}</p>{% endif %}
+  </div>
+
+  <div class="field">
+    <label for="regulation_url">Link do regulamento</label>
+    <input type="url" id="regulation_url" name="regulation_url" placeholder="https://..." value="{{ values.regulation_url or '' }}">
+    {% if errors.regulation_url %}<p class="error">{{ errors.regulation_url }}</p>{% endif %}
+  </div>
+
+  <div class="field">
+    <label for="registration_url">Link de inscricao</label>
+    <input type="url" id="registration_url" name="registration_url" placeholder="https://..." value="{{ values.registration_url or '' }}">
+    {% if errors.registration_url %}<p class="error">{{ errors.registration_url }}</p>{% endif %}
+  </div>
+
+  <div class="field">
+    <label for="link">Site do torneio</label>
+    <input type="url" id="link" name="link" placeholder="https://..." value="{{ values.link or '' }}">
+    {% if errors.link %}<p class="error">{{ errors.link }}</p>{% endif %}
+  </div>
+
+  <div class="field">
+    <label for="description">Descricao</label>
+    <textarea id="description" name="description" rows="4">{{ values.description or '' }}</textarea>
+  </div>
+
+  <div class="field">
+    <label for="admin_note">Nota interna do admin</label>
+    <textarea id="admin_note" name="admin_note" rows="2">{{ values.admin_note or '' }}</textarea>
+  </div>
+
+  <button type="submit">Criar torneio</button>
+</form>
+{% endblock %}

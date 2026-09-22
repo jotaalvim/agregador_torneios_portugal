@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Calendario | Torneios Xadrez Norte{% endblock %}
+{% block og_title %}Calendario de torneios{% endblock %}
+{% block description %}Vista anual do calendario de torneios de xadrez no Norte de Portugal, mes a mes.{% endblock %}
+{% block content %}
+<h1>Calendario</h1>
+
+<div class="calendar-filters">
+  <a href="/calendario" class="{% if not selected_district %}active{% endif %}">Todos</a>
+  {% for d in districts %}
+  <a href="/calendario?distrito={{ d.slug }}" class="{% if selected_district == d.slug %}active{% endif %}">{{ d.name }}</a>
+  {% endfor %}
+</div>
+
+{% include "_calendar_grid.html" %}
+
+<h2>Lista de torneios</h2>
+{% if upcoming %}
+<table class="tournament-table">
+  <thead>
+    <tr><th>Data</th><th>Torneio</th><th>Local</th><th>Ritmo</th><th>Link</th></tr>
+  </thead>
+  <tbody>
+    {% for t in upcoming %}{% include "row.html" %}{% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">Sem torneios agendados.</p>
+{% endif %}
+
+{% if past %}
+<details class="archive">
+  <summary>Terminados</summary>
+  <table class="tournament-table">
+    <thead>
+      <tr><th>Data</th><th>Torneio</th><th>Local</th><th>Ritmo</th><th>Link</th></tr>
+    </thead>
+    <tbody>
+      {% for t in past %}{% include "row.html" %}{% endfor %}
+    </tbody>
+  </table>
+</details>
+{% endif %}
+
+<p class="links"><a href="/calendario.ics{% if selected_district %}?distrito={{ selected_district }}{% endif %}">Subscrever calendario (.ics)</a></p>
+
+<script>
+  (function () {
+    function toggle(selector, date, on) {
+      document.querySelectorAll(selector + '[data-date="' + date + '"]').forEach(function (el) {
+        el.classList.toggle("is-highlighted", on);
+      });
+    }
+
+    document.querySelectorAll(".mini-month td[data-date]").forEach(function (td) {
+      var date = td.dataset.date;
+      if (!date) return;
+      td.addEventListener("mouseenter", function () { toggle(".tournament-table tbody tr", date, true); });
+      td.addEventListener("mouseleave", function () { toggle(".tournament-table tbody tr", date, false); });
+    });
+
+    document.querySelectorAll(".tournament-table tbody tr[data-date]").forEach(function (tr) {
+      var date = tr.dataset.date;
+      tr.addEventListener("mouseenter", function () { toggle(".mini-month td", date, true); });
+      tr.addEventListener("mouseleave", function () { toggle(".mini-month td", date, false); });
+    });
+  })();
+</script>
+{% endblock %}

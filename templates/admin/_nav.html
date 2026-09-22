@@ -1,0 +1,8 @@
+<nav class="admin-nav">
+  <a href="/admin">Painel</a>
+  <a href="/admin/tournaments/new" class="btn">+ Novo torneio</a>
+  <form method="post" action="/admin/logout" class="inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" class="link-btn">Sair</button>
+  </form>
+</nav>

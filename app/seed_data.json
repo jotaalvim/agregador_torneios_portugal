@@ -1,0 +1,50 @@
+[
+  {
+    "title": "II Open Internacional de Braga",
+    "district": "Braga",
+    "date": "2026-10-11",
+    "location": "Pavilhao Flavio Sa Leite, Braga",
+    "time_control": "90' + 30''/lance, 9 rondas",
+    "organizer": "Associacao de Xadrez do Minho",
+    "chess_results_url": "https://chess-results.com/tnr123456.aspx",
+    "regulation_url": "https://example.org/regulamento-braga.pdf",
+    "link": "https://example.org/open-braga-2026",
+    "description": "Torneio suico de nove rondas, valido para rating FIDE standard. Inscricoes abertas ate uma semana antes do inicio."
+  },
+  {
+    "title": "IV Semi-Rapidas de Guimaraes",
+    "district": "Braga",
+    "date": "2026-12-06",
+    "location": "Centro Cultural Vila Flor, Guimaraes",
+    "time_control": "15' + 5''/lance, 7 rondas",
+    "organizer": "Grupo Desportivo de Guimaraes",
+    "chess_results_url": "https://chess-results.com/tnr123457.aspx",
+    "regulation_url": null,
+    "link": "https://example.org/semirapidas-guimaraes",
+    "description": "Prova de um dia, aberta a federados e nao federados. Escalao sub-14 com classificacao propria."
+  },
+  {
+    "title": "Open de Outono do Porto",
+    "district": "Porto",
+    "date": "2026-11-08",
+    "location": "Pavilhao Rosa Mota, Porto",
+    "time_control": "60' + 30''/lance, 7 rondas",
+    "organizer": "Associacao de Xadrez do Porto",
+    "chess_results_url": "https://chess-results.com/tnr123458.aspx",
+    "regulation_url": "https://example.org/regulamento-porto.pdf",
+    "link": null,
+    "description": "Torneio de fim de semana com duas rondas por dia. Premios por escalao etario e por rating."
+  },
+  {
+    "title": "Blitz de Ano Novo de Viana do Castelo",
+    "district": "Viana do Castelo",
+    "date": "2027-01-17",
+    "location": "Biblioteca Municipal, Viana do Castelo",
+    "time_control": "3' + 2''/lance, 11 rondas",
+    "organizer": "Clube de Xadrez de Viana",
+    "chess_results_url": null,
+    "regulation_url": null,
+    "link": "https://example.org/blitz-viana-2027",
+    "description": "Torneio de blitz em sistema suico, ronda unica de tarde. Entrada livre para socios."
+  }
+]

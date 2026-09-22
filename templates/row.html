@@ -1,0 +1,16 @@
+<tr class="{% if t.finished %}is-finished{% endif %}" data-date="{{ t.date }}">
+  <td class="nowrap" data-label="Data">
+    <time datetime="{{ t.date }}">{{ t.date_fmt }}</time>
+    {% if t.finished %}<span class="tag tag-done">Terminado</span>{% endif %}
+    {% if t.is_today %}<span class="tag tag-live">Hoje</span>{% endif %}
+  </td>
+  <td data-label="Torneio"><a href="/torneios/{{ t.id }}">{{ t.title }}</a></td>
+  <td data-label="Local">{{ t.location }}</td>
+  <td data-label="Ritmo">{{ t.time_control }}</td>
+  <td class="links" data-label="Link">
+    {% if t.chess_results_url %}<a href="{{ t.chess_results_url }}" rel="noopener">chess-results</a>{% endif %}
+    {% if t.regulation_url %}<a href="{{ t.regulation_url }}" rel="noopener">regulamento</a>{% endif %}
+    {% if t.registration_url %}<a href="{{ t.registration_url }}" rel="noopener">inscricao</a>{% endif %}
+    {% if t.link %}<a href="{{ t.link }}" rel="noopener">site</a>{% endif %}
+  </td>
+</tr>

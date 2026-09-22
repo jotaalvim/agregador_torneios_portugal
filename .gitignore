@@ -1,0 +1,11 @@
+_site/
+_cache/
+dist-newstyle/
+.backup-*/
+
+# Python backend
+__pycache__/
+*.pyc
+.venv/
+.env
+data/*.db

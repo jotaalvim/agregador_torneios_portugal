@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Administracao | Torneios Xadrez Norte{% endblock %}
+{% block body_class %}has-admin-nav{% endblock %}
+{% block admin_nav %}{% include "admin/_nav.html" %}{% endblock %}
+{% block content %}
+<h1>Administracao</h1>
+
+<h2>Pendentes ({{ pending|length }})</h2>
+{% if pending %}
+<table>
+  <thead>
+    <tr><th>Data</th><th>Torneio</th><th>Distrito</th><th>Submetido por</th><th>Acoes</th></tr>
+  </thead>
+  <tbody>
+    {% for t in pending %}
+    <tr>
+      <td class="nowrap" data-label="Data">{{ t.date.strftime("%d/%m/%Y") }}</td>
+      <td data-label="Torneio">{{ t.title }}</td>
+      <td data-label="Distrito">{{ t.district }}</td>
+      <td data-label="Submetido por">{{ t.submitted_by_name or "-" }}{% if t.submitted_by_email %} &middot; {{ t.submitted_by_email }}{% endif %}</td>
+      <td class="actions" data-label="Acoes">
+        <a href="/admin/tournaments/{{ t.id }}/edit">editar</a>
+        <form method="post" action="/admin/tournaments/{{ t.id }}/approve" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit" class="link-btn approve">aprovar</button>
+        </form>
+        <form method="post" action="/admin/tournaments/{{ t.id }}/reject" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit" class="link-btn reject">rejeitar</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">Sem submissoes pendentes.</p>
+{% endif %}
+
+<h2>Todos os torneios</h2>
+<table>
+  <thead>
+    <tr><th>Data</th><th>Torneio</th><th>Distrito</th><th>Estado</th><th>Acoes</th></tr>
+  </thead>
+  <tbody>
+    {% for t in all_tournaments %}
+    <tr>
+      <td class="nowrap" data-label="Data">{{ t.date.strftime("%d/%m/%Y") }}</td>
+      <td data-label="Torneio">{{ t.title }}</td>
+      <td data-label="Distrito">{{ t.district }}</td>
+      <td data-label="Estado"><span class="status status-{{ t.status.value }}">{{ t.status.value }}</span></td>
+      <td class="actions" data-label="Acoes">
+        <a href="/admin/tournaments/{{ t.id }}/edit">editar</a>
+        <form method="post" action="/admin/tournaments/{{ t.id }}/delete" class="inline" onsubmit="return confirm('Apagar este torneio?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit" class="link-btn reject">apagar</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

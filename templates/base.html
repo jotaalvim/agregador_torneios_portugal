@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Torneios Xadrez Norte{% endblock %}</title>
+    <meta name="description" content="{% block description %}Torneios de xadrez no Norte de Portugal: Braga, Porto, Viana do Castelo e mais. Calendario atualizado por clubes e associacoes.{% endblock %}">
+    <meta property="og:site_name" content="Torneios Xadrez Norte">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{% block og_title %}Torneios Xadrez Norte{% endblock %}">
+    <meta property="og:description" content="{{ self.description() }}">
+    <meta property="og:locale" content="pt_PT">
+    <link rel="icon" href="/static/logo.jpg" type="image/jpeg">
+    <link rel="canonical" href="{{ request.url }}">
+    <link rel="stylesheet" href="/static/css/style.css">
+    {% if goatcounter_script_url and goatcounter_endpoint %}
+    <script>window.goatcounter = {allow_local: true}</script>
+    <script data-goatcounter="{{ goatcounter_endpoint }}" async src="{{ goatcounter_script_url }}"></script>
+    {% endif %}
+  </head>
+  <body class="{% block body_class %}{% endblock %}">
+    <header>
+      <a class="brand" href="/">
+        <img src="/static/logo.jpg" alt="Associacao de Xadrez do Distrito de Braga" class="logo">
+        <span>Torneios Xadrez Norte</span>
+      </a>
+      <nav class="site-nav">
+        <a href="/">Todos</a>
+        {% for d in districts %}
+        <a href="/distrito/{{ d.slug }}">{{ d.name }}</a>
+        {% endfor %}
+        <a href="/calendario" class="nav-calendario">Calendario</a>
+        <a href="/submeter" class="nav-cta">+ Adicionar torneio</a>
+      </nav>
+    </header>
+
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+      Torneios de xadrez do Norte de Portugal &middot; <a href="mailto:joaoalvim179@proton.me">Contacto</a> &middot; <a href="/admin/login">Area de administracao</a>
+    </footer>
+
+    <div class="bottom-bars">
+      {% block admin_nav %}{% endblock %}
+    </div>
+  </body>
+</html>

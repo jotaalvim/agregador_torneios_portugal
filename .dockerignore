@@ -1,0 +1,13 @@
+.git
+.gitignore
+legacy-hakyll
+handoff
+_temp
+*.md
+!README.md
+.claude
+data
+__pycache__
+*.pyc
+.venv
+.env

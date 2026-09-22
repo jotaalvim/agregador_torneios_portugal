@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Torneios | Torneios Xadrez Norte{% endblock %}
+{% block content %}
+<h1>Torneios</h1>
+
+<form class="search" method="get" action="/" role="search">
+  <input type="search" name="q" value="{{ q }}" placeholder="Pesquisar por nome, local ou clube&hellip;" aria-label="Pesquisar torneios">
+  <button type="submit">Pesquisar</button>
+  {% if q %}<a class="search-clear" href="/">Limpar</a>{% endif %}
+</form>
+
+<h2>Proximos</h2>
+{% if upcoming %}
+<table class="tournament-table">
+  <thead>
+    <tr><th>Data</th><th>Torneio</th><th>Local</th><th>Ritmo</th><th>Link</th></tr>
+  </thead>
+  <tbody>
+    {% for t in upcoming %}{% include "row.html" %}{% endfor %}
+  </tbody>
+</table>
+{% elif q %}
+<p class="empty">Sem torneios proximos para &ldquo;{{ q }}&rdquo;.</p>
+{% else %}
+<p class="empty">Sem torneios agendados.</p>
+{% endif %}
+
+{% if past %}
+<details class="archive">
+  <summary>Terminados</summary>
+  <table class="tournament-table">
+    <thead>
+      <tr><th>Data</th><th>Torneio</th><th>Local</th><th>Ritmo</th><th>Link</th></tr>
+    </thead>
+    <tbody>
+      {% for t in past %}{% include "row.html" %}{% endfor %}
+    </tbody>
+  </table>
+</details>
+{% endif %}
+
+<p class="links"><a href="/calendario.ics">Subscrever calendario (.ics)</a></p>
+{% endblock %}

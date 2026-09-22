@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}{{ t.title }} | Torneios Xadrez Norte{% endblock %}
+{% block og_title %}{{ t.title }}{% endblock %}
+{% block description %}{{ t.title }} &mdash; {{ t.date_fmt }}, {{ t.location }} ({{ t.district }}). Ritmo: {{ t.time_control }}.{% endblock %}
+{% block content %}
+<article class="{% if t.finished %}is-finished{% endif %}">
+  {% if t.finished %}<p class="banner">Este torneio ja terminou.</p>{% endif %}
+  {% if t.is_today %}<p class="banner banner-live">A decorrer hoje.</p>{% endif %}
+
+  <h1>{{ t.title }}</h1>
+  <dl class="meta">
+    <dt>Data</dt>          <dd><time datetime="{{ t.date }}">{{ t.date_fmt }}</time></dd>
+    <dt>Distrito</dt>      <dd><a href="/distrito/{{ t.district_slug }}">{{ t.district }}</a></dd>
+    <dt>Local</dt>         <dd>{{ t.location }}</dd>
+    <dt>Ritmo de jogo</dt> <dd>{{ t.time_control }}</dd>
+    {% if t.organizer %}<dt>Organizacao</dt><dd>{{ t.organizer }}</dd>{% endif %}
+    {% if t.chess_results_url %}<dt>Resultados</dt><dd><a href="{{ t.chess_results_url }}" rel="noopener">chess-results.com</a></dd>{% endif %}
+    {% if t.regulation_url %}<dt>Regulamento</dt><dd><a href="{{ t.regulation_url }}" rel="noopener">Ver documento</a></dd>{% endif %}
+    {% if t.registration_url %}<dt>Inscricao</dt><dd><a href="{{ t.registration_url }}" rel="noopener">Formulario de inscricao</a></dd>{% endif %}
+    {% if t.link %}<dt>Site</dt><dd><a href="{{ t.link }}" rel="noopener">Pagina oficial</a></dd>{% endif %}
+  </dl>
+  {% if t.description %}<p>{{ t.description }}</p>{% endif %}
+  <p class="links">
+    <a href="/torneios/{{ t.id }}/ics">Adicionar ao calendario (.ics)</a>
+    <button type="button" class="btn btn-share" data-share-text="{{ t.share_text }}" data-share-title="{{ t.title }}">Partilhar</button>
+  </p>
+
+  <h2>Calendario: {{ t.district }}</h2>
+  {% include "_calendar_grid.html" %}
+</article>
+<script>
+  (function () {
+    var btn = document.querySelector(".btn-share");
+    if (!btn) return;
+    var originalLabel = btn.textContent;
+    btn.addEventListener("click", async function () {
+      var text = btn.dataset.shareText;
+      var title = btn.dataset.shareTitle;
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: title, text: text });
+          return;
+        } catch (err) {
+          if (err && err.name === "AbortError") return;
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(text);
+        btn.textContent = "Copiado!";
+        setTimeout(function () { btn.textContent = originalLabel; }, 2000);
+      } catch (err) {
+        window.prompt("Copia o texto:", text);
+      }
+    });
+  })();
+</script>
+{% endblock %}

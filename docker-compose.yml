@@ -1,0 +1,50 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
+      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY in .env}
+      # Default is "false" so this works out of the box over plain HTTP.
+      # Set to "true" once this sits behind HTTPS (reverse proxy or platform TLS) —
+      # see README for why.
+      SESSION_HTTPS_ONLY: ${SESSION_HTTPS_ONLY:-false}
+      # Both empty by default: the tracking snippet only renders once both are
+      # set, so the site works fine before GoatCounter is set up. See README.
+      GOATCOUNTER_SCRIPT_URL: ${GOATCOUNTER_SCRIPT_URL:-}
+      GOATCOUNTER_ENDPOINT: ${GOATCOUNTER_ENDPOINT:-}
+    volumes:
+      - chess_data:/app/data
+    restart: unless-stopped
+
+  goatcounter:
+    image: arp242/goatcounter:latest
+    # SQLite storage (goatcounter-data volume below) — no separate database
+    # service needed. -tls http disables GoatCounter's built-in TLS/ACME
+    # since this sits behind the same reverse proxy/platform TLS as `web`.
+    # goatcounter/init.sh creates the site on first boot (empty volume) and
+    # is a no-op on every later deploy, since the site then already exists
+    # on goatcounter_data — see README.
+    entrypoint: ["/bin/sh", "/goatcounter-init.sh"]
+    environment:
+      # All three blank by default: init.sh then just runs "serve" and you
+      # get today's manual setup-wizard flow. Set all three to skip the
+      # wizard entirely on a fresh deploy — see README. (Deliberately NOT
+      # prefixed GOATCOUNTER_ — the goatcounter binary itself validates any
+      # GOATCOUNTER_* env var as one of its own config knobs and refuses to
+      # start on an unrecognized one.)
+      GC_SITE_VHOST: ${GC_SITE_VHOST:-}
+      GC_SITE_ADMIN_EMAIL: ${GC_SITE_ADMIN_EMAIL:-}
+      GC_SITE_ADMIN_PASSWORD: ${GC_SITE_ADMIN_PASSWORD:-}
+    ports:
+      - "8081:8080"
+    volumes:
+      - goatcounter_data:/home/goatcounter/goatcounter-data
+      - ./goatcounter/init.sh:/goatcounter-init.sh:ro
+    restart: unless-stopped
+
+volumes:
+  chess_data:
+  goatcounter_data:

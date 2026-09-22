@@ -1,0 +1,43 @@
+<div class="year-calendar">
+  {% for m in months %}
+  <table class="mini-month">
+    <caption>{{ m.name }}</caption>
+    <thead>
+      <tr>{% for w in ["S", "T", "Q", "Q", "S", "S", "D"] %}<th>{{ w }}</th>{% endfor %}</tr>
+    </thead>
+    <tbody>
+      {% for week in m.weeks %}
+      <tr>
+        {% for cell in week %}
+        {% if cell is none %}
+        <td></td>
+        {% else %}
+        <td data-date="{{ cell.date }}" class="{% if cell.is_today %}is-today {% endif %}{% if cell.tournaments %}has-tournament{% endif %}">
+          {% if cell.tournaments %}
+          {% set n = cell.tournaments|length %}
+          {% set marks = cell.tournaments[:4] if n <= 4 else cell.tournaments[:3] %}
+          <a href="/torneios/{{ cell.tournaments[0].id }}"
+             class="day-link"
+             title="{{ cell.tournaments|map(attribute='title')|join(' | ') }}"
+             aria-label="{{ cell.day }}: {{ cell.tournaments|map(attribute='title')|join(', ') }}">
+            <span class="day-num">{{ cell.day }}</span>
+            <span class="day-marks" aria-hidden="true">
+              {% for t in marks %}<span class="mark"></span>{% endfor %}
+              {% if n > 4 %}<span class="mark-more">+{{ n - 3 }}</span>{% endif %}
+            </span>
+          </a>
+          {% else %}
+          <span class="day-cell">
+            <span class="day-num">{{ cell.day }}</span>
+            <span class="day-marks" aria-hidden="true"></span>
+          </span>
+          {% endif %}
+        </td>
+        {% endif %}
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endfor %}
+</div>
