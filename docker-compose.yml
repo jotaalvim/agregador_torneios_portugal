@@ -1,8 +1,25 @@
 services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+    restart: unless-stopped
+
   web:
     build: .
-    ports:
-      - "8000:8000"
+    # No ports published to the host: Caddy is the only public entry point
+    # and reaches this service over the internal compose network as
+    # "web:8000". Uncomment the line below only for direct local testing
+    # without Caddy in front (e.g. `docker compose up web`).
+    # ports:
+    #   - "8000:8000"
     environment:
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
@@ -48,3 +65,5 @@ services:
 volumes:
   chess_data:
   goatcounter_data:
+  caddy_data:
+  caddy_config:
