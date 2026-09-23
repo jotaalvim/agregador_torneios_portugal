@@ -1,4 +1,4 @@
-xadreznorte.duckdns.org, torneiosdexadrez.pt, www.torneiosdexadrez.pt {
+xadreznorte.duckdns.org, torneiosdexadrez.pt {
 	# Same-origin path for the GoatCounter tracking script/endpoint, so the
 	# browser loads it over https:// too -- an http:// script on this https
 	# page gets silently blocked as mixed content otherwise.
