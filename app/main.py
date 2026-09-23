@@ -40,7 +40,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Torneios Xadrez Norte", lifespan=lifespan)
+app = FastAPI(title="Torneios Xadrez Distrito de Braga", lifespan=lifespan)
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, same_site="lax", https_only=SESSION_HTTPS_ONLY)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
@@ -226,7 +226,7 @@ def calendar_feed(db: Session = Depends(get_db), distrito: str = ""):
 
 def render_ics(tournaments: list[Tournament]) -> str:
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Xadrez Norte//PT"]
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Xadrez Distrito de Braga//PT"]
     for t in tournaments:
         lines += [
             "BEGIN:VEVENT",
