@@ -236,19 +236,55 @@ button.link-btn.approve { color: var(--success); }
 .status-rejected { background: #fee2e2; color: var(--danger); }
 
 @media (max-width: 640px) {
-  .tournament-table, .tournament-table thead, .tournament-table tbody,
-  .tournament-table tr, .tournament-table td { display: block; }
+  .tournament-table, .tournament-table thead, .tournament-table tbody { display: block; }
   .tournament-table thead { display: none; }
-  .tournament-table tr { border-bottom: 1px solid var(--line); padding: .5rem 0; }
-  .tournament-table td { border: 0; padding: .15rem .5rem; }
+  .tournament-table tr {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: .35rem;
+    align-items: baseline;
+    border-bottom: 1px solid var(--line);
+    padding: .3rem 0;
+  }
+  .tournament-table td { display: block; border: 0; padding: .08rem .5rem; }
   .tournament-table td[data-label]::before {
-    content: attr(data-label);
-    display: block;
+    content: attr(data-label) ": ";
     font-size: .68rem;
     text-transform: uppercase;
     letter-spacing: .04em;
     color: var(--muted);
   }
+  /* Title leads the card, ahead of the date; both span the full width. */
+  .tournament-table td[data-label="Torneio"] { order: -1; flex-basis: 100%; }
+  .tournament-table td[data-label="Torneio"]::before { content: none; }
+  .tournament-table td[data-label="Torneio"] a { font-weight: 600; }
+  .tournament-table td[data-label="Data"] { flex-basis: 100%; }
+  /* Local, Ritmo and Link then flow together on one wrapping line. Local is
+     free-text (organizer-submitted, sometimes a full street address) and
+     can't be relied on to fit, so it's clipped -- the full address is
+     always one tap away on the tournament's own page. */
+  .tournament-table td[data-label="Local"] {
+    flex: 1 1 0;
+    min-width: 3rem;
+    padding-right: 0;
+    font-size: .83rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tournament-table td[data-label="Local"]::before { content: none; }
+  .tournament-table td[data-label="Ritmo"] { flex: 0 0 auto; padding-left: 0; padding-right: 0; font-size: .83rem; }
+  .tournament-table td[data-label="Ritmo"]::before { content: "· " attr(data-label) ": "; }
+  .tournament-table td[data-label="Link"] {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .5rem;
+    padding-left: 0;
+    font-size: .83rem;
+  }
+  .tournament-table td[data-label="Link"]::before { content: "·"; }
   dl.meta { grid-template-columns: 1fr; }
 }
 
