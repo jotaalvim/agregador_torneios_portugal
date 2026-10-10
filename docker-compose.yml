@@ -18,8 +18,8 @@ services:
     # and reaches this service over the internal compose network as
     # "web:8000". Uncomment the line below only for direct local testing
     # without Caddy in front (e.g. `docker compose up web`).
-    # ports:
-    #   - "8000:8000"
+    ports:
+      - "8000:8000"
     environment:
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}

@@ -6,6 +6,8 @@
   --accent-dark: #1e3a8a;
   --accent-light: #eef3ff;
   --today: #ea580c;
+  --today-soft: #f8cab1;   /* --today at 32% over white -- a stronger mix than the
+                              district softs, since it replaces a solid fill */
   --bg: #ffffff;
   --danger: #b91c1c;
   --success: #15803d;
@@ -13,16 +15,31 @@
   /* District colours. Each slot is a hue (--district-N) plus the same hue at
      22% over white (--district-N-soft), used as the fill behind a day number
      so the number itself stays dark and readable (>10:1) while the ring
-     carries the hue. Slot 0 is "outros": any district without its own slot.
-     Slot order and the set of hues are fixed -- see DISTRICT_SLOTS in
-     app/view.py for why there are six. */
+     carries the hue. Slot 0 is "outros": anything with no district of its own.
+     Slot order is fixed -- see DISTRICT_SLOTS in app/view.py, which also
+     records why twenty hues cannot all be told apart and what carries the
+     identity instead. */
   --district-0: #5b6b80;  --district-0-soft: #dbdee3;
-  --district-1: #2a78d6;  --district-1-soft: #d0e1f6;
-  --district-2: #1baf7a;  --district-2-soft: #cdede2;
-  --district-3: #eda100;  --district-3-soft: #fbeac7;
-  --district-4: #008300;  --district-4-soft: #c7e4c7;
-  --district-5: #4a3aa7;  --district-5-soft: #d7d4ec;
-  --district-6: #e34948;  --district-6-soft: #f9d7d7;
+  --district-1: #7d365d;  --district-1-soft: #e2d3db;  /* Braga */
+  --district-2: #6fa0f0;  --district-2-soft: #dfeafc;  /* Porto */
+  --district-3: #222ed9;  --district-3-soft: #ced1f7;  /* Viana do Castelo */
+  --district-4: #ec6484;  --district-4-soft: #fbdde4;  /* Vila Real */
+  --district-5: #af6341;  --district-5-soft: #edddd5;  /* Bragança */
+  --district-6: #966aed;  --district-6-soft: #e8defb;  /* Aveiro */
+  --district-7: #97953e;  --district-7-soft: #e8e8d5;  /* Lisboa */
+  --district-8: #6a2eae;  --district-8-soft: #ded1ed;  /* Coimbra */
+  --district-9: #2bd23c;  --district-9-soft: #d0f5d4;  /* Viseu */
+  --district-10: #229e87;  --district-10-soft: #ceeae5;  /* Guarda */
+  --district-11: #8c5e9e;  --district-11-soft: #e6dcea;  /* Leiria */
+  --district-12: #1c632e;  --district-12-soft: #cdddd1;  /* Santarém */
+  --district-13: #84c282;  --district-13-soft: #e4f2e4;  /* Setúbal */
+  --district-14: #a8260f;  --district-14-soft: #eccfca;  /* Castelo Branco */
+  --district-15: #bd3c6f;  --district-15-soft: #f0d4df;  /* Faro */
+  --district-16: #4c5fcc;  --district-16-soft: #d8dcf4;  /* Évora */
+  --district-17: #ff66fd;  --district-17-soft: #ffddff;  /* Portalegre */
+  --district-18: #de94c5;  --district-18-soft: #f8e7f2;  /* Beja */
+  --district-19: #d05cc3;  --district-19-soft: #f5dbf2;  /* Madeira */
+  --district-20: #9e0589;  --district-20-soft: #eac8e5;  /* Açores */
 }
 
 /* Every element that belongs to a district carries a .d-N class; it only sets
@@ -35,6 +52,20 @@
 .d-4 { --d: var(--district-4); --d-soft: var(--district-4-soft); }
 .d-5 { --d: var(--district-5); --d-soft: var(--district-5-soft); }
 .d-6 { --d: var(--district-6); --d-soft: var(--district-6-soft); }
+.d-7 { --d: var(--district-7); --d-soft: var(--district-7-soft); }
+.d-8 { --d: var(--district-8); --d-soft: var(--district-8-soft); }
+.d-9 { --d: var(--district-9); --d-soft: var(--district-9-soft); }
+.d-10 { --d: var(--district-10); --d-soft: var(--district-10-soft); }
+.d-11 { --d: var(--district-11); --d-soft: var(--district-11-soft); }
+.d-12 { --d: var(--district-12); --d-soft: var(--district-12-soft); }
+.d-13 { --d: var(--district-13); --d-soft: var(--district-13-soft); }
+.d-14 { --d: var(--district-14); --d-soft: var(--district-14-soft); }
+.d-15 { --d: var(--district-15); --d-soft: var(--district-15-soft); }
+.d-16 { --d: var(--district-16); --d-soft: var(--district-16-soft); }
+.d-17 { --d: var(--district-17); --d-soft: var(--district-17-soft); }
+.d-18 { --d: var(--district-18); --d-soft: var(--district-18-soft); }
+.d-19 { --d: var(--district-19); --d-soft: var(--district-19-soft); }
+.d-20 { --d: var(--district-20); --d-soft: var(--district-20-soft); }
 /* A day holding tournaments from more than one district: the circle stays
    neutral rather than picking one of them, and the marks underneath show
    which districts are actually there. Slate rather than --accent-dark, which
@@ -428,8 +459,6 @@ button.link-btn.approve { color: var(--success); }
   box-shadow: none;
   color: #fff;
 }
-.mini-month td.is-today.is-highlighted .day-num { background: #c2410c; }
-
 /* Wrapper on every real day cell (tournament or not), so the marks row
    below is always reserved at the same height and row alignment never
    depends on how many days in that row happen to have tournaments.
@@ -484,20 +513,64 @@ button.link-btn.approve { color: var(--success); }
   color: var(--accent-dark);
 }
 
-/* "Today" outranks the district colour on the circle itself -- there is only
-   ever one such cell, and losing track of it costs more than losing one
-   district tint. The marks below it still carry the district colours. */
-.mini-month td.is-today .day-num {
-  font-weight: 700;
-  background: var(--today);
-  color: #fff;
-  box-shadow: 0 0 0 3px rgba(234, 88, 12, .3);
-}
+/* "Today" is a star rather than a disc. There is only ever one such cell and
+   losing track of it costs more than losing one district tint, so it outranks
+   the district colour on the day number itself -- but in a grid already full
+   of coloured circles, one more circle is a weak signal where a different
+   silhouette is an instant one. The marks below it still carry the district
+   colours.
+
+   A two-digit number does not fit inside a star's body at this size, so the
+   star sits behind the number as a badge: pale fill, dark ink on top, the
+   same arrangement the district days use. Two clipped layers rather than one
+   -- the outer star is the rim, the inner one punches the pale fill out of
+   it, which is how you get an outlined star out of clip-path. The inner
+   radius is 0.58 of the outer rather than the geometric 0.382, trading a
+   pointier star for a body wide enough that a two-digit day sits inside the
+   arms instead of across them; the number drops to .92em for the same
+   reason. Sized at 1.95em
+   against a cell that is ~2.1em at the narrowest breakpoint, so the points
+   never reach the neighbouring day. */
+.mini-month td.is-today .day-num,
 .mini-month td.is-today.has-tournament .day-num {
-  background: var(--today);
-  color: #fff;
-  box-shadow: inset 0 0 0 2px #fff, 0 0 0 3px rgba(234, 88, 12, .3);
+  position: relative;
+  z-index: 0;
+  font-weight: 700;
+  font-size: .92em;
+  color: #7c2d12;
+  background: none;
+  box-shadow: none;
 }
+.mini-month td.is-today .day-num::before,
+.mini-month td.is-today .day-num::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: -1;
+  transform: translate(-50%, -50%);
+  clip-path: polygon(50% 0%, 67.1% 26.5%, 97.6% 34.5%, 77.6% 59%, 79.4% 90.5%,
+                     50% 79%, 20.6% 90.5%, 22.4% 59%, 2.4% 34.5%, 33% 26.5%);
+}
+.mini-month td.is-today .day-num::before {
+  width: 1.95em;
+  height: 1.95em;
+  background: var(--today);
+}
+.mini-month td.is-today .day-num::after {
+  width: 1.55em;
+  height: 1.55em;
+  background: var(--today-soft);
+}
+/* Row-hover sync: the star stays a star and just deepens, instead of the
+   solid navy fill the other days flip to -- which would hide it. */
+.mini-month td.is-today.is-highlighted .day-num {
+  background: none;
+  box-shadow: none;
+  color: #fff;
+}
+.mini-month td.is-today.is-highlighted .day-num::before { background: #7c2d12; }
+.mini-month td.is-today.is-highlighted .day-num::after { background: #c2410c; }
 
 @media (max-width: 900px) {
   .year-calendar { grid-template-columns: repeat(3, 1fr); }

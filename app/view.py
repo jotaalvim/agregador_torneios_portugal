@@ -14,12 +14,18 @@ MONTH_NAMES_PT = [
 # its colour no matter which other districts are on screen, so filtering the
 # calendar never repaints the ones that remain.
 #
-# Six slots is the ceiling, not an arbitrary number: the calendar puts
-# arbitrary district pairs side by side (two tournaments on the same day,
-# two neighbouring days), so every pair has to stay distinguishable, including
-# under colour-blind simulation. Six is the largest set of the source palette
-# that clears that bar. A district with no slot renders in the neutral
-# "outros" grey rather than reusing a colour that already means something else.
+# Every district gets its own slot. Twenty mutually-distinguishable colours do
+# not exist -- the palette was searched for maximum worst-pair separation and
+# still lands at ~11 Delta E (OKLab x100) on its closest pair, under the ~15
+# that full-colour vision needs, and ~6 under colour-blind simulation. Colour
+# is therefore a secondary cue here, never the only one: the district name is
+# in every day's tooltip and aria-label, next to every legend dot, and in the
+# filters.
+#
+# Slot order is not arbitrary. The palette search hands out its best-separated
+# colours first, so this list runs from the districts that fill most of this
+# calendar down to the ones that rarely appear. The pairs that ended up closest
+# together (slot 1 vs 20, for one) are the ones least likely to share a screen.
 DISTRICT_SLOTS = {
     "braga": 1,
     "porto": 2,
@@ -27,7 +33,24 @@ DISTRICT_SLOTS = {
     "vila-real": 4,
     "braganca": 5,
     "aveiro": 6,
+    "lisboa": 7,
+    "coimbra": 8,
+    "viseu": 9,
+    "guarda": 10,
+    "leiria": 11,
+    "santarem": 12,
+    "setubal": 13,
+    "castelo-branco": 14,
+    "faro": 15,
+    "evora": 16,
+    "portalegre": 17,
+    "beja": 18,
+    "madeira": 19,
+    "acores": 20,
 }
+# Anything outside the list above (a national event, a typo, a new region)
+# falls back to the neutral grey rather than borrowing a colour that already
+# means a specific district.
 DISTRICT_SLOT_OTHER = 0
 
 

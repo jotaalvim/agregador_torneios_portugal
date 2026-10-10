@@ -107,6 +107,41 @@ out — that default lives in `docker-compose.yml`, not the app itself: if
 the variable is unset entirely (e.g. running without Docker, see above),
 `app/config.py` defaults to `true`.
 
+## Redeploy (updating a running server)
+
+`docker compose` reads `docker-compose.yml` from the current directory, so run
+these from the checkout, not from `~` — otherwise you just get
+`no configuration file provided: not found`. `docker compose ls` prints the
+path if you've forgotten where it is.
+
+```bash
+cd /path/to/the/checkout
+git pull
+docker compose stop goatcounter     # frees RAM for the build
+docker compose up -d --build web
+docker compose start goatcounter
+```
+
+`--build` is not optional: `templates/` and `static/` are copied into the image
+at build time (see [Dockerfile](Dockerfile)), so a plain restart keeps serving
+the old pages.
+
+Stopping GoatCounter around the build is a small-server concession. On a 512 MB
+droplet the running containers leave barely over 100 MB free, which is not
+enough for `pip install` to unpack pydantic-core and friends — the build then
+either crawls or gets OOM-killed with no clear error. For the same reason, make
+sure the server has swap before building:
+
+```bash
+free -h    # Swap: 0B on a 512 MB box means the next build will stall
+fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+echo '/swapfile none swap sw 0 0' >> /etc/fstab   # survives reboot
+```
+
+If disk gets tight (`df -h /`), reclaim it with `docker image prune -a` rather
+than `docker system prune -a` — the latter also deletes the build cache, which
+is what makes the next rebuild fast.
+
 ## Analytics (self-hosted GoatCounter)
 
 Page-view tracking is optional and off by default. `docker-compose.yml`
@@ -181,10 +216,14 @@ lines in `templates/base.html`.
 app/            FastAPI app: routes, models, db, auth, seed data
 templates/      Jinja2 templates (public pages + admin)
 static/         CSS, logo, uploaded regulation PDFs
+scripts/        Tournament import/edit tools (see SCRAPING.md)
 tests/          Pytest suite (see Testing below)
 data/           SQLite database file (gitignored, created at runtime)
 legacy-hakyll/  Archived old Hakyll static-site generator (reference only)
 ```
+
+Adding tournaments in bulk (scraping the sources, reviewing, submitting) is
+documented separately in [SCRAPING.md](SCRAPING.md).
 
 ## Testing
 
