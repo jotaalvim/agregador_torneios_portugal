@@ -285,7 +285,10 @@ def submit_form_post(
     }
 
     if confirmacao.strip():
-        # Looks like a bot. Pretend success without writing anything.
+        # Looks like a bot. Pretend success without writing anything, but
+        # log it in case a real visitor's browser/extension autofilled the
+        # hidden field so a false positive can be spotted and investigated.
+        logger.warning("Submissao bloqueada pelo honeypot (possivel falso positivo): %r", values)
         return RedirectResponse("/submeter/obrigado", status_code=303)
 
     errors = validate_submission(values)
@@ -308,7 +311,16 @@ def submit_form_post(
         "submitted_by_name": values["submitted_by_name"] or None,
         "submitted_by_email": values["submitted_by_email"] or None,
     }
-    crud.create_tournament(db, data, status=Status.pending)
+    try:
+        crud.create_tournament(db, data, status=Status.pending)
+    except Exception:
+        logger.exception("Falha ao gravar submissao")
+        db.rollback()
+        ctx = base_ctx(db, request) | {
+            "errors": {"general": "Nao foi possivel gravar a submissao. Tenta novamente."},
+            "values": values,
+        }
+        return templates.TemplateResponse(request, "submit.html", ctx, status_code=500)
     return RedirectResponse("/submeter/obrigado", status_code=303)
 
 

@@ -12,17 +12,24 @@
         {% if cell is none %}
         <td></td>
         {% else %}
-        <td data-date="{{ cell.date }}" class="{% if cell.is_today %}is-today {% endif %}{% if cell.tournaments %}has-tournament{% endif %}">
+        {# A day takes its district colour only when every tournament on it is
+           from the same district; otherwise it stays neutral and the marks
+           underneath show which districts are involved. #}
+        {% set slots = cell.tournaments|map(attribute='district_slot')|unique|list %}
+        {% set day_class = "d-" ~ slots[0] if slots|length == 1 else "d-mixed" %}
+        {% set labels = [] %}
+        {% for t in cell.tournaments %}{% set _ = labels.append(t.district ~ " - " ~ t.title) %}{% endfor %}
+        <td data-date="{{ cell.date }}" class="{% if cell.is_today %}is-today {% endif %}{% if cell.tournaments %}has-tournament {{ day_class }}{% endif %}">
           {% if cell.tournaments %}
           {% set n = cell.tournaments|length %}
           {% set marks = cell.tournaments[:4] if n <= 4 else cell.tournaments[:3] %}
           <a href="/torneios/{{ cell.tournaments[0].id }}"
              class="day-link"
-             title="{{ cell.tournaments|map(attribute='title')|join(' | ') }}"
-             aria-label="{{ cell.day }}: {{ cell.tournaments|map(attribute='title')|join(', ') }}">
+             title="{{ labels|join(' | ') }}"
+             aria-label="{{ cell.day }}: {{ labels|join(', ') }}">
             <span class="day-num">{{ cell.day }}</span>
             <span class="day-marks" aria-hidden="true">
-              {% for t in marks %}<span class="mark"></span>{% endfor %}
+              {% for t in marks %}<span class="mark d-{{ t.district_slot }}"></span>{% endfor %}
               {% if n > 4 %}<span class="mark-more">+{{ n - 3 }}</span>{% endif %}
             </span>
           </a>

@@ -9,6 +9,31 @@ MONTH_NAMES_PT = [
     "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO",
 ]
 
+# Colour slot per district, used by the calendar grid (see --district-N in
+# style.css). The mapping is by slug and deliberately fixed: a district keeps
+# its colour no matter which other districts are on screen, so filtering the
+# calendar never repaints the ones that remain.
+#
+# Six slots is the ceiling, not an arbitrary number: the calendar puts
+# arbitrary district pairs side by side (two tournaments on the same day,
+# two neighbouring days), so every pair has to stay distinguishable, including
+# under colour-blind simulation. Six is the largest set of the source palette
+# that clears that bar. A district with no slot renders in the neutral
+# "outros" grey rather than reusing a colour that already means something else.
+DISTRICT_SLOTS = {
+    "braga": 1,
+    "porto": 2,
+    "viana-do-castelo": 3,
+    "vila-real": 4,
+    "braganca": 5,
+    "aveiro": 6,
+}
+DISTRICT_SLOT_OTHER = 0
+
+
+def district_slot(name: str) -> int:
+    return DISTRICT_SLOTS.get(slugify(name), DISTRICT_SLOT_OTHER)
+
 
 def share_text(t: Tournament, page_url: str | None = None) -> str:
     """Plain-text summary formatted for sharing (WhatsApp, clipboard, etc):
@@ -35,6 +60,7 @@ def row(t: Tournament, today: date, page_url: str | None = None) -> dict:
         "title": t.title,
         "district": t.district,
         "district_slug": slugify(t.district),
+        "district_slot": district_slot(t.district),
         "location": t.location,
         "time_control": t.time_control,
         "organizer": t.organizer,
@@ -106,7 +132,10 @@ def build_season_calendar(tournaments: list[Tournament], today: date, anchor: da
 
 
 def districts_nav(names: list[str]) -> list[dict]:
-    return [{"name": n, "slug": slugify(n)} for n in sorted(set(names))]
+    return [
+        {"name": n, "slug": slugify(n), "slot": district_slot(n)}
+        for n in sorted(set(names))
+    ]
 
 
 def edit_values(t: Tournament) -> dict:

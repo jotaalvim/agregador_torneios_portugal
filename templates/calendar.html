@@ -5,10 +5,14 @@
 {% block content %}
 <h1>Calendario</h1>
 
+{# Doubles as the legend for the colours in the grid below: every district
+   shown there appears here next to its own swatch. #}
 <div class="calendar-filters">
   <a href="/calendario" class="{% if not selected_district %}active{% endif %}">Todos</a>
   {% for d in districts %}
-  <a href="/calendario?distrito={{ d.slug }}" class="{% if selected_district == d.slug %}active{% endif %}">{{ d.name }}</a>
+  <a href="/calendario?distrito={{ d.slug }}" class="d-{{ d.slot }} {% if selected_district == d.slug %}active{% endif %}">
+    <span class="district-dot" aria-hidden="true"></span>{{ d.name }}
+  </a>
   {% endfor %}
 </div>
 

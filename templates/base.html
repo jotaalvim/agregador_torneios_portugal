@@ -29,8 +29,10 @@
         {% for d in districts %}
         <a href="/distrito/{{ d.slug }}">{{ d.name }}</a>
         {% endfor %}
-        <a href="/calendario" class="nav-calendario">Calendario</a>
         <a href="/submeter" class="nav-cta">+ Adicionar torneio</a>
+        <a href="/calendario" class="nav-calendario">
+          <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.6" y="3" width="12.8" height="11.4" rx="1.6"/><path d="M1.6 6.6h12.8M5 1.6v2.8M11 1.6v2.8"/></svg>Calendario
+        </a>
       </nav>
     </header>
 

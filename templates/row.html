@@ -4,7 +4,9 @@
     {% if t.finished %}<span class="tag tag-done">Terminado</span>{% endif %}
     {% if t.is_today %}<span class="tag tag-live">Hoje</span>{% endif %}
   </td>
-  <td data-label="Torneio"><a href="/torneios/{{ t.id }}">{{ t.title }}</a></td>
+  <td data-label="Torneio" class="d-{{ t.district_slot }}">
+    <span class="district-dot" title="{{ t.district }}" aria-hidden="true"></span><a href="/torneios/{{ t.id }}">{{ t.title }}</a>
+  </td>
   <td data-label="Local">{{ t.location }}</td>
   <td data-label="Ritmo">{{ t.time_control }}</td>
   <td class="links" data-label="Link">

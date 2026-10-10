@@ -3,6 +3,7 @@
 {% block content %}
 <h1>Adicionar torneio</h1>
 <p class="notice">As submissoes sao revistas por um administrador antes de aparecerem no site.</p>
+{% if errors.general %}<p class="error">{{ errors.general }}</p>{% endif %}
 
 <form method="post" action="/submeter" class="form" novalidate>
   <div class="honeypot" aria-hidden="true">

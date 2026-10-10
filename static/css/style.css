@@ -9,7 +9,37 @@
   --bg: #ffffff;
   --danger: #b91c1c;
   --success: #15803d;
+
+  /* District colours. Each slot is a hue (--district-N) plus the same hue at
+     22% over white (--district-N-soft), used as the fill behind a day number
+     so the number itself stays dark and readable (>10:1) while the ring
+     carries the hue. Slot 0 is "outros": any district without its own slot.
+     Slot order and the set of hues are fixed -- see DISTRICT_SLOTS in
+     app/view.py for why there are six. */
+  --district-0: #5b6b80;  --district-0-soft: #dbdee3;
+  --district-1: #2a78d6;  --district-1-soft: #d0e1f6;
+  --district-2: #1baf7a;  --district-2-soft: #cdede2;
+  --district-3: #eda100;  --district-3-soft: #fbeac7;
+  --district-4: #008300;  --district-4-soft: #c7e4c7;
+  --district-5: #4a3aa7;  --district-5-soft: #d7d4ec;
+  --district-6: #e34948;  --district-6-soft: #f9d7d7;
 }
+
+/* Every element that belongs to a district carries a .d-N class; it only sets
+   --d / --d-soft, which the rules below (day numbers, marks, legend dots) read.
+   Inherited, so a day cell's class also colours the marks inside it. */
+.d-0 { --d: var(--district-0); --d-soft: var(--district-0-soft); }
+.d-1 { --d: var(--district-1); --d-soft: var(--district-1-soft); }
+.d-2 { --d: var(--district-2); --d-soft: var(--district-2-soft); }
+.d-3 { --d: var(--district-3); --d-soft: var(--district-3-soft); }
+.d-4 { --d: var(--district-4); --d-soft: var(--district-4-soft); }
+.d-5 { --d: var(--district-5); --d-soft: var(--district-5-soft); }
+.d-6 { --d: var(--district-6); --d-soft: var(--district-6-soft); }
+/* A day holding tournaments from more than one district: the circle stays
+   neutral rather than picking one of them, and the marks underneath show
+   which districts are actually there. Slate rather than --accent-dark, which
+   is blue enough to be mistaken for the blue district at this size. */
+.d-mixed { --d: #16233a; --d-soft: #e7eaef; }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body {
@@ -48,7 +78,10 @@ header {
   z-index: 20;
   box-shadow: 0 -2px 8px rgba(0,0,0,.12);
 }
-.site-nav { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0; padding: 0; }
+/* flex:1 + the auto margin below split the bar in two: the district links
+   group left, "+ Adicionar torneio" and "Calendario" sit at the far right so
+   Calendario no longer reads as one more district. */
+.site-nav { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0; padding: 0; flex: 1 1 auto; min-width: 0; }
 .site-nav a {
   padding: .3rem .7rem;
   border: 1px solid rgba(255,255,255,.6);
@@ -58,8 +91,35 @@ header {
   text-decoration: none;
 }
 .site-nav a:hover { border-color: #fff; color: #fff; }
-.site-nav a.nav-cta { background: #fff; color: var(--accent-dark); border-color: #fff; font-weight: 600; }
+.site-nav a.nav-cta { background: #fff; color: var(--accent-dark); border-color: #fff; font-weight: 600; margin-left: auto; }
 .site-nav a.nav-cta:hover { background: var(--accent-light); }
+/* Calendario is a different kind of destination from the district filters --
+   a whole view, not a filter -- so it gets a different silhouette rather than
+   being a seventh pill: squared corners, a solid border and a faint fill. */
+.site-nav a.nav-calendario {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  border-radius: 5px;
+  border-color: #fff;
+  background: rgba(255, 255, 255, .14);
+  color: #fff;
+  font-weight: 600;
+}
+.site-nav a.nav-calendario svg {
+  width: .95em;
+  height: .95em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+.site-nav a.nav-calendario:hover { background: rgba(255, 255, 255, .3); }
+@media (max-width: 700px) {
+  /* Once the bar wraps there is no "far right" to push to, and the auto
+     margin would just strand the two actions on their own lines. */
+  .site-nav a.nav-cta { margin-left: 0; }
+}
 
 main { flex: 1 0 auto; width: 100%; max-width: 1140px; margin: 0 auto; padding: 1.75rem 1.25rem; }
 .search { display: flex; gap: .5rem; margin-bottom: 1.4rem; max-width: 28rem; }
@@ -166,7 +226,7 @@ form select {
 fieldset { border: 1px solid var(--line); border-radius: 6px; padding: .9rem 1rem 0.2rem; margin: 1.2rem 0; }
 legend { font-size: .82rem; color: var(--muted); padding: 0 .4rem; }
 .error { color: var(--danger); font-size: .82rem; margin: .25rem 0 0; }
-.honeypot { position: absolute; left: -9999px; top: -9999px; }
+.honeypot { display: none; }
 button[type="submit"] {
   background: var(--accent);
   color: #fff;
@@ -291,6 +351,9 @@ button.link-btn.approve { color: var(--success); }
 /* calendar district filters ------------------------------------------------------ */
 .calendar-filters { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 1.4rem; }
 .calendar-filters a {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
   padding: .3rem .75rem;
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -300,6 +363,21 @@ button.link-btn.approve { color: var(--success); }
 }
 .calendar-filters a:hover { border-color: var(--accent); color: var(--accent); }
 .calendar-filters a.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+/* Legend swatch, also used in the tournament list so a row and its day in the
+   grid carry the same colour. Decorative only -- the district name is always
+   written next to it (legend) or in the row's own link target. */
+.district-dot {
+  flex: 0 0 auto;
+  display: inline-block;
+  width: .6rem;
+  height: .6rem;
+  border-radius: 50%;
+  background: var(--d, var(--muted));
+  vertical-align: -1px;
+}
+.tournament-table .district-dot { margin-right: .45rem; }
+.calendar-filters a.active .district-dot { box-shadow: 0 0 0 1.5px #fff; }
 
 /* year calendar ----------------------------------------------------------------- */
 .year-calendar {
@@ -330,15 +408,25 @@ button.link-btn.approve { color: var(--success); }
   height: 1.6em;
   border-radius: 50%;
   color: inherit;
-  transition: transform .12s ease, background-color .12s ease;
+  transition: transform .12s ease, background-color .12s ease, box-shadow .12s ease;
 }
-.mini-month td.has-tournament .day-num { background: var(--accent); color: #fff; font-weight: 700; }
+/* The hue rides on the ring and the tinted fill rather than on a solid fill,
+   so the day number keeps dark ink on a pale background. A solid fill in any
+   of these hues would put small white text at 4:1 or less. */
+.mini-month td.has-tournament .day-num {
+  background: var(--d-soft, var(--accent-light));
+  box-shadow: inset 0 0 0 2px var(--d, var(--accent));
+  color: var(--fg);
+  font-weight: 700;
+}
 
 /* Synced with the table below: hovering a tournament row highlights its
    day here, and vice versa (see the script at the bottom of calendar.html). */
 .mini-month td.is-highlighted .day-num {
   transform: scale(1.25);
   background: var(--accent-dark);
+  box-shadow: none;
+  color: #fff;
 }
 .mini-month td.is-today.is-highlighted .day-num { background: #c2410c; }
 
@@ -358,7 +446,12 @@ button.link-btn.approve { color: var(--success); }
   text-decoration: none;
   color: inherit;
 }
-.mini-month td a.day-link:hover .day-num { background: var(--accent-dark); }
+/* Hover thickens the district ring instead of flipping to a solid fill with
+   white text: half these hues are too light to carry white text at this size. */
+.mini-month td a.day-link:hover .day-num {
+  transform: scale(1.15);
+  box-shadow: inset 0 0 0 3px var(--d, var(--accent));
+}
 
 /* One mark per tournament: each tournament actually gets its own small
    visible bar instead of being collapsed into a count digit or a colour
@@ -378,10 +471,10 @@ button.link-btn.approve { color: var(--success); }
 }
 .mini-month td .day-marks .mark {
   flex: 0 0 auto;
-  width: 2px;
+  width: 3px;
   height: 4px;
-  border-radius: 1px;
-  background: var(--accent-dark);
+  border-radius: 1.5px;
+  background: var(--d, var(--accent-dark));
 }
 .mini-month td .day-marks .mark-more {
   flex: 0 0 auto;
@@ -391,6 +484,9 @@ button.link-btn.approve { color: var(--success); }
   color: var(--accent-dark);
 }
 
+/* "Today" outranks the district colour on the circle itself -- there is only
+   ever one such cell, and losing track of it costs more than losing one
+   district tint. The marks below it still carry the district colours. */
 .mini-month td.is-today .day-num {
   font-weight: 700;
   background: var(--today);
@@ -409,5 +505,5 @@ button.link-btn.approve { color: var(--success); }
 @media (max-width: 560px) {
   .year-calendar { grid-template-columns: repeat(2, 1fr); gap: 1.25rem .6rem; }
   .mini-month { font-size: .68rem; }
-  .mini-month td .day-marks .mark { width: 1.5px; height: 3px; }
+  .mini-month td .day-marks .mark { width: 2.5px; height: 3px; }
 }
