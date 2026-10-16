@@ -16,7 +16,7 @@
       <span class="district-dot" aria-hidden="true"></span><span class="t-district">{{ t.district }}</span><span class="t-sep" aria-hidden="true">&middot;</span><span class="t-loc">{{ t.location }}</span>
     </span>
   </td>
-  <td class="col-tc">{{ t.time_control }}</td>
+  <td class="col-tc">{{ t.time_control_html }}</td>
   <td class="col-links">
     {% if t.chess_results_url %}<a href="{{ t.chess_results_url }}" rel="noopener">chess-results</a>{% endif %}
     {% if t.regulation_url %}<a href="{{ t.regulation_url }}" rel="noopener">regulamento</a>{% endif %}

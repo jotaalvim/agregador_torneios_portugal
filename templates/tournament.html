@@ -22,7 +22,7 @@
         <dt>Data</dt>          <dd><time datetime="{{ t.date }}">{{ t.date_fmt }}</time></dd>
         <dt>Distrito</dt>      <dd><a href="/distrito/{{ t.district_slug }}">{{ t.district }}</a></dd>
         <dt>Local</dt>         <dd>{{ t.location }}</dd>
-        <dt>Ritmo de jogo</dt> <dd class="tc">{{ t.time_control }}</dd>
+        <dt>Ritmo de jogo</dt> <dd class="tc">{{ t.time_control_html }}</dd>
         {% if t.organizer %}<dt>Organizacao</dt><dd>{{ t.organizer }}</dd>{% endif %}
       </dl>
       {% if t.description %}<div class="detail-desc"><p>{{ t.description }}</p></div>{% endif %}

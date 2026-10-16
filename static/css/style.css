@@ -107,7 +107,7 @@
     --highlight-row: #172443;
 
     --navy: #1b326f;
-    --checker: #111a2b;
+    --checker: #34508f;      /* lighter than the band, or the board edge vanishes */
     --link: #8db3ff;
     --btn: #2f62e0;
     --btn-hover: #2554c7;
@@ -258,12 +258,13 @@ a:hover { text-decoration-color: currentColor; text-decoration-thickness: 2px; }
    Masthead
    ========================================================================== */
 .site-header { background: var(--navy); color: #fff; }
-/* The edge of a board: one row of squares where the band meets the page. */
+/* The edge of a board: two rows of squares where the band meets the page.
+   One row on its own reads as a dashed line; two read as a chessboard. */
 .site-header::after {
   content: "";
   display: block;
-  height: 6px;
-  background: conic-gradient(var(--navy) 25%, var(--checker) 0 50%, var(--navy) 0 75%, var(--checker) 0) 0 0 / 12px 12px;
+  height: 10px;
+  background: conic-gradient(var(--navy) 25%, var(--checker) 0 50%, var(--navy) 0 75%, var(--checker) 0) 0 0 / 10px 10px;
 }
 .site-header :focus-visible { outline-color: #fff; }
 .site-header-inner {
@@ -371,7 +372,9 @@ button.link-btn:hover { text-decoration-color: currentColor; text-decoration-thi
 }
 .page-head h1 { margin: 0; }
 
-.tabs { display: flex; gap: 1.25rem; }
+/* Phones only: on wider screens the masthead's Torneios / Calendario links
+   do this job (they keep the district too), and two sets would repeat it. */
+.tabs { display: none; gap: 1.25rem; }
 .tabs a {
   padding: .2rem 0;
   border-bottom: 2px solid transparent;
@@ -502,8 +505,15 @@ button.link-btn:hover { text-decoration-color: currentColor; text-decoration-thi
 /* Time controls are the one number a player reads first, so they get the
    display face, like the clock settings on a results board. */
 .tournament-table .col-tc { width: 11rem; font-family: var(--display); font-size: 1.1rem; font-weight: 600; }
+/* Barlow Condensed gives the minute mark a wide right margin; pull the next
+   character back so "12′ + 3″" spaces evenly (see time_control_html()). */
+.tc-min { margin-right: -.16em; }
 .tournament-table .col-links { width: 1%; font-size: .9rem; white-space: nowrap; }
 .col-links a + a { margin-left: .9rem; }
+/* Grey until pointed at: the titles and dates lead the row, and a column of
+   blue underlines down the right edge would outshout them. */
+.col-links a { color: var(--muted); }
+.col-links a:hover, .col-links a:focus-visible { color: var(--link); }
 
 .empty { margin: .4rem 0 0; padding: .9rem 0; border-top: 2px solid var(--rule); color: var(--muted); }
 
@@ -528,7 +538,7 @@ button.link-btn:hover { text-decoration-color: currentColor; text-decoration-thi
 .detail-head { margin-bottom: 1.5rem; }
 .detail-date {
   margin: 0 0 .4rem;
-  color: var(--muted);
+  color: var(--fg);
   font-family: var(--display);
   font-size: 1.2rem;
   font-weight: 700;
@@ -928,6 +938,7 @@ button.link-btn.reject { color: var(--danger); }
      list and calendar happens through the tabs on those pages. */
   .nav-link { display: none; }
   .nav-cta-extra { display: none; }
+  .tabs { display: flex; }
   .brand { font-size: 1.3rem; }
   .brand .logo { width: 36px; height: 36px; }
 

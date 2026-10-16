@@ -1,5 +1,8 @@
 import calendar as _calendar
+import re
 from datetime import date
+
+from markupsafe import Markup, escape
 
 from .models import Tournament
 from .utils import deaccent, slugify
@@ -60,6 +63,29 @@ def district_slot(name: str) -> int:
     return DISTRICT_SLOTS.get(slugify(name), DISTRICT_SLOT_OTHER)
 
 
+_SECONDS_MARK = re.compile(r"(?<=\d)(?:''|\")")
+_MINUTES_MARK = re.compile(r"(?<=\d)'")
+
+
+def time_control_display(text: str) -> str:
+    """Organizers type minutes and seconds with the keyboard's ' and '' (or ");
+    print them as the prime marks they stand for: 90' + 30'' -> 90′ + 30″.
+    Only a mark right after a digit is touched, so an apostrophe inside a
+    word stays an apostrophe. Display only -- the stored text, the .ics feed
+    and the share text keep what was typed."""
+    return _MINUTES_MARK.sub("′", _SECONDS_MARK.sub("″", text))
+
+
+def time_control_html(text: str) -> Markup:
+    """time_control_display(), HTML-escaped, with each minute mark wrapped so
+    the stylesheet can pull in the wide right margin Barlow Condensed draws
+    after ′ (.tc-min in style.css) -- left alone, "12′ + 3″" reads as
+    "12′  + 3″". Escaping comes first, so organizer-typed text can't inject
+    markup; ′ never occurs inside an entity, so wrapping it afterwards is safe."""
+    escaped = str(escape(time_control_display(text)))
+    return Markup(escaped.replace("′", '<span class="tc-min">′</span>'))
+
+
 def share_text(t: Tournament, page_url: str | None = None) -> str:
     """Plain-text summary formatted for sharing (WhatsApp, clipboard, etc):
     date/district/title on the first line, then ritmo and whichever links
@@ -88,6 +114,7 @@ def row(t: Tournament, today: date, page_url: str | None = None) -> dict:
         "district_slot": district_slot(t.district),
         "location": t.location,
         "time_control": t.time_control,
+        "time_control_html": time_control_html(t.time_control),
         "organizer": t.organizer,
         "chess_results_url": t.chess_results_url,
         "regulation_url": t.regulation_url,
