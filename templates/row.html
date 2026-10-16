@@ -1,8 +1,8 @@
 <tr class="{% if t.finished %}is-finished{% endif %}{% if t.is_today %} is-today{% endif %}" data-date="{{ t.date }}">
   <td class="col-date">
-    <time class="date-tile" datetime="{{ t.date }}">
-      <span class="date-wd" aria-hidden="true">{{ t.weekday_short }}</span>
-      <span class="date-day" aria-hidden="true">{{ t.day }}</span>
+    <time class="fx-date" datetime="{{ t.date }}">
+      <span class="fx-day" aria-hidden="true">{{ t.day }}</span>
+      <span class="fx-wd" aria-hidden="true">{{ t.weekday_short }}</span>
       <span class="sr-only">{{ t.date_fmt }}</span>
     </time>
   </td>
@@ -18,9 +18,9 @@
   </td>
   <td class="col-tc">{{ t.time_control }}</td>
   <td class="col-links">
-    {% if t.chess_results_url %}<a class="pill" href="{{ t.chess_results_url }}" rel="noopener">chess-results</a>{% endif %}
-    {% if t.regulation_url %}<a class="pill" href="{{ t.regulation_url }}" rel="noopener">regulamento</a>{% endif %}
-    {% if t.registration_url %}<a class="pill" href="{{ t.registration_url }}" rel="noopener">inscricao</a>{% endif %}
-    {% if t.link %}<a class="pill" href="{{ t.link }}" rel="noopener">site</a>{% endif %}
+    {% if t.chess_results_url %}<a href="{{ t.chess_results_url }}" rel="noopener">chess-results</a>{% endif %}
+    {% if t.regulation_url %}<a href="{{ t.regulation_url }}" rel="noopener">regulamento</a>{% endif %}
+    {% if t.registration_url %}<a href="{{ t.registration_url }}" rel="noopener">inscricao</a>{% endif %}
+    {% if t.link %}<a href="{{ t.link }}" rel="noopener">site</a>{% endif %}
   </td>
 </tr>

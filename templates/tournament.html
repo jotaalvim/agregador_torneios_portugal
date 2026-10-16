@@ -3,54 +3,43 @@
 {% block og_title %}{{ t.title }}{% endblock %}
 {% block description %}{{ t.title }} &mdash; {{ t.date_fmt }}, {{ t.location }} ({{ t.district }}). Ritmo: {{ t.time_control }}.{% endblock %}
 {% block content %}
-<article class="detail{% if t.finished %} is-finished{% endif %}">
-  <a class="back-link" href="/">
-    <svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M9.5 3.5 5 8l4.5 4.5"/></svg>Todos os torneios
-  </a>
+<article class="detail{% if t.finished %} is-finished{% endif %}{% if t.is_today %} is-today{% endif %}">
+  <a class="back-link" href="/">&larr; Todos os torneios</a>
 
   <header class="detail-head">
-    <time class="date-tile date-tile-lg{% if t.is_today %} is-today{% endif %}" datetime="{{ t.date }}">
-      <span class="date-wd" aria-hidden="true">{{ t.weekday_short }}</span>
-      <span class="date-day" aria-hidden="true">{{ t.day }}</span>
-      <span class="date-mon" aria-hidden="true">{{ t.month_short }}</span>
-      <span class="sr-only">{{ t.date_fmt }}</span>
-    </time>
-    <div class="detail-title">
-      {% if t.finished %}<p class="banner">Este torneio ja terminou.</p>{% endif %}
-      {% if t.is_today %}<p class="banner banner-live">A decorrer hoje.</p>{% endif %}
-      <h1>{{ t.title }}</h1>
-      <p class="detail-sub d-{{ t.district_slot }}"><span class="district-dot" aria-hidden="true"></span>{{ t.district }} &middot; {{ t.location }}</p>
-    </div>
+    <p class="detail-date">
+      <time datetime="{{ t.date }}">{{ t.weekday_short }} {{ t.day }} {{ t.month_short }} {{ t.date[:4] }}</time>
+      {% if t.finished %}<span class="banner">Este torneio ja terminou.</span>{% endif %}
+      {% if t.is_today %}<span class="banner banner-live">A decorrer hoje.</span>{% endif %}
+    </p>
+    <h1>{{ t.title }}</h1>
+    <p class="detail-sub d-{{ t.district_slot }}"><span class="district-dot" aria-hidden="true"></span>{{ t.district }} &middot; {{ t.location }}</p>
   </header>
 
   <div class="detail-grid">
     <div class="detail-main">
-      <dl class="meta card">
+      <dl class="meta">
         <dt>Data</dt>          <dd><time datetime="{{ t.date }}">{{ t.date_fmt }}</time></dd>
         <dt>Distrito</dt>      <dd><a href="/distrito/{{ t.district_slug }}">{{ t.district }}</a></dd>
         <dt>Local</dt>         <dd>{{ t.location }}</dd>
-        <dt>Ritmo de jogo</dt> <dd>{{ t.time_control }}</dd>
+        <dt>Ritmo de jogo</dt> <dd class="tc">{{ t.time_control }}</dd>
         {% if t.organizer %}<dt>Organizacao</dt><dd>{{ t.organizer }}</dd>{% endif %}
       </dl>
-      {% if t.description %}<div class="card detail-desc"><p>{{ t.description }}</p></div>{% endif %}
+      {% if t.description %}<div class="detail-desc"><p>{{ t.description }}</p></div>{% endif %}
     </div>
 
-    <aside class="card detail-actions" aria-label="Links">
+    <aside class="detail-actions" aria-label="Links">
       {# Registration is the one thing to do before an upcoming tournament, so
          it leads; once the tournament is over it is just another link. #}
-      {% if t.registration_url %}<a class="btn{% if t.finished %} btn-secondary{% endif %}" href="{{ t.registration_url }}" rel="noopener">Inscricao</a>{% endif %}
-      {% if t.regulation_url %}<a class="btn btn-secondary" href="{{ t.regulation_url }}" rel="noopener">Regulamento</a>{% endif %}
-      {% if t.chess_results_url %}<a class="btn btn-secondary" href="{{ t.chess_results_url }}" rel="noopener">chess-results.com</a>{% endif %}
-      {% if t.link %}<a class="btn btn-secondary" href="{{ t.link }}" rel="noopener">Pagina oficial</a>{% endif %}
-      {% if t.registration_url or t.regulation_url or t.chess_results_url or t.link %}<hr>{% endif %}
-      <a class="btn btn-ghost" href="/torneios/{{ t.id }}/ics">
-        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.6" y="3" width="12.8" height="11.4" rx="1.6"/><path d="M1.6 6.6h12.8M5 1.6v2.8M11 1.6v2.8M8 8.6v3.6M6.2 10.4h3.6"/></svg>
-        Adicionar ao calendario (.ics)
-      </a>
-      <button type="button" class="btn btn-ghost btn-share" data-share-text="{{ t.share_text }}" data-share-title="{{ t.title }}">
-        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 10V2M5 4.8 8 1.8l3 3M4.5 7H3.6c-.6 0-1 .4-1 1v5.4c0 .6.4 1 1 1h8.8c.6 0 1-.4 1-1V8c0-.6-.4-1-1-1h-.9"/></svg>
-        <span class="btn-label">Partilhar</span>
-      </button>
+      {% if t.registration_url and not t.finished %}<a class="btn" href="{{ t.registration_url }}" rel="noopener">Inscricao</a>{% endif %}
+      <ul class="detail-links">
+        {% if t.registration_url and t.finished %}<li><a href="{{ t.registration_url }}" rel="noopener">Inscricao</a></li>{% endif %}
+        {% if t.regulation_url %}<li><a href="{{ t.regulation_url }}" rel="noopener">Regulamento</a></li>{% endif %}
+        {% if t.chess_results_url %}<li><a href="{{ t.chess_results_url }}" rel="noopener">chess-results.com</a></li>{% endif %}
+        {% if t.link %}<li><a href="{{ t.link }}" rel="noopener">Pagina oficial</a></li>{% endif %}
+        <li><a href="/torneios/{{ t.id }}/ics">Adicionar ao calendario (.ics)</a></li>
+        <li><button type="button" class="link-btn btn-share" data-share-text="{{ t.share_text }}" data-share-title="{{ t.title }}"><span class="btn-label">Partilhar</span></button></li>
+      </ul>
     </aside>
   </div>
 
@@ -64,7 +53,7 @@
   (function () {
     var btn = document.querySelector(".btn-share");
     if (!btn) return;
-    // Only the label changes, so the icon next to it survives "Copiado!".
+    // Only the label changes, so anything else inside the button survives "Copiado!".
     var label = btn.querySelector(".btn-label") || btn;
     var originalLabel = label.textContent;
     btn.addEventListener("click", async function () {

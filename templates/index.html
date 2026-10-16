@@ -7,17 +7,14 @@
 </div>
 
 <form class="search" method="get" action="/" role="search">
-  <div class="search-field">
-    <svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="7" cy="7" r="4.6"/><path d="m10.4 10.4 3.4 3.4"/></svg>
-    <input type="search" name="q" value="{{ q }}" placeholder="Pesquisar por nome, local ou clube&hellip;" aria-label="Pesquisar torneios">
-    <button type="submit">Pesquisar</button>
-  </div>
+  <input type="search" name="q" value="{{ q }}" placeholder="Pesquisar por nome, local ou clube&hellip;" aria-label="Pesquisar torneios">
+  <button type="submit">Pesquisar</button>
   {% if q %}<a class="search-clear" href="/">Limpar</a>{% endif %}
 </form>
 
 {% with chips_mode = "list", active_slug = "" %}{% include "_district_chips.html" %}{% endwith %}
 
-<h2 class="section-title">Proximos{% if upcoming %} <span class="count">{{ upcoming|length }}</span>{% endif %}</h2>
+<h2 class="section-title">Proximos{% if upcoming %} <span class="count">({{ upcoming|length }})</span>{% endif %}</h2>
 {% if upcoming %}
 {% with rows = upcoming %}{% include "_tournament_list.html" %}{% endwith %}
 {% elif q %}
@@ -28,15 +25,10 @@
 
 {% if past %}
 <details class="archive">
-  <summary>Terminados <span class="count">{{ past|length }}</span></summary>
+  <summary>Terminados <span class="count">({{ past|length }})</span></summary>
   {% with rows = past %}{% include "_tournament_list.html" %}{% endwith %}
 </details>
 {% endif %}
 
-<p class="page-actions">
-  <a class="btn btn-secondary" href="/calendario.ics">
-    <svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.6" y="3" width="12.8" height="11.4" rx="1.6"/><path d="M1.6 6.6h12.8M5 1.6v2.8M11 1.6v2.8M8 8.6v3.6M6.2 10.4h3.6"/></svg>
-    Subscrever calendario (.ics)
-  </a>
-</p>
+<p class="page-actions"><a href="/calendario.ics">Subscrever calendario (.ics)</a></p>
 {% endblock %}

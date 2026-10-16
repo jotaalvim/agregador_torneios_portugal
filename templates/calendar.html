@@ -12,7 +12,7 @@
 
 {% include "_calendar_grid.html" %}
 
-<h2 class="section-title">Lista de torneios{% if upcoming %} <span class="count">{{ upcoming|length }}</span>{% endif %}</h2>
+<h2 class="section-title">Lista de torneios{% if upcoming %} <span class="count">({{ upcoming|length }})</span>{% endif %}</h2>
 {% if upcoming %}
 {% with rows = upcoming %}{% include "_tournament_list.html" %}{% endwith %}
 {% else %}
@@ -21,17 +21,12 @@
 
 {% if past %}
 <details class="archive">
-  <summary>Terminados <span class="count">{{ past|length }}</span></summary>
+  <summary>Terminados <span class="count">({{ past|length }})</span></summary>
   {% with rows = past %}{% include "_tournament_list.html" %}{% endwith %}
 </details>
 {% endif %}
 
-<p class="page-actions">
-  <a class="btn btn-secondary" href="/calendario.ics{% if selected_district %}?distrito={{ selected_district }}{% endif %}">
-    <svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.6" y="3" width="12.8" height="11.4" rx="1.6"/><path d="M1.6 6.6h12.8M5 1.6v2.8M11 1.6v2.8M8 8.6v3.6M6.2 10.4h3.6"/></svg>
-    Subscrever calendario (.ics)
-  </a>
-</p>
+<p class="page-actions"><a href="/calendario.ics{% if selected_district %}?distrito={{ selected_district }}{% endif %}">Subscrever calendario (.ics)</a></p>
 
 <script>
   (function () {

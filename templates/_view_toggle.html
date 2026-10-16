@@ -1,10 +1,6 @@
 {# List <-> calendar switch. Keeps the district filter (`slug`, empty for
    all districts) across the switch; `view_mode` is "list" or "calendar". #}
-<nav class="view-toggle" aria-label="Vista">
-  <a href="{{ '/distrito/' ~ slug if slug else '/' }}"{% if view_mode == 'list' %} class="is-active" aria-current="page"{% endif %}>
-    <svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 4h7.5M6 8h7.5M6 12h7.5M2.5 4h.5M2.5 8h.5M2.5 12h.5"/></svg>Lista
-  </a>
-  <a href="{{ '/calendario?distrito=' ~ slug if slug else '/calendario' }}"{% if view_mode == 'calendar' %} class="is-active" aria-current="page"{% endif %}>
-    <svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.6" y="3" width="12.8" height="11.4" rx="1.6"/><path d="M1.6 6.6h12.8M5 1.6v2.8M11 1.6v2.8"/></svg>Calendario
-  </a>
+<nav class="tabs" aria-label="Vista">
+  <a href="{{ '/distrito/' ~ slug if slug else '/' }}"{% if view_mode == 'list' %} class="is-active" aria-current="page"{% endif %}>Lista</a>
+  <a href="{{ '/calendario?distrito=' ~ slug if slug else '/calendario' }}"{% if view_mode == 'calendar' %} class="is-active" aria-current="page"{% endif %}>Calendario</a>
 </nav>

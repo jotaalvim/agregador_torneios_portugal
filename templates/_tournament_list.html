@@ -1,9 +1,8 @@
 {# Shared by every public list. Expects `rows` (view.row dicts), already in
    the order to show them -- upcoming runs forwards, the archive backwards --
    so the month headings simply follow that order. One <tbody> per month, so
-   each heading labels exactly the rows under it. The wrapper carries the
-   card's rounded corners, which a table cannot clip its own rows to. #}
-<div class="list-card">
+   each heading labels exactly the rows under it. #}
+<div class="listing">
 <table class="tournament-table">
   <thead class="sr-only">
     <tr><th scope="col">Data</th><th scope="col">Torneio</th><th scope="col">Ritmo</th><th scope="col">Links</th></tr>
