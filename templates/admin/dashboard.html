@@ -7,7 +7,8 @@
 
 <h2>Pendentes ({{ pending|length }})</h2>
 {% if pending %}
-<table>
+<div class="table-scroll">
+<table class="data-table">
   <thead>
     <tr><th>Data</th><th>Torneio</th><th>Distrito</th><th>Submetido por</th><th>Acoes</th></tr>
   </thead>
@@ -33,12 +34,14 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% else %}
 <p class="empty">Sem submissoes pendentes.</p>
 {% endif %}
 
 <h2>Todos os torneios</h2>
-<table>
+<div class="table-scroll">
+<table class="data-table">
   <thead>
     <tr><th>Data</th><th>Torneio</th><th>Distrito</th><th>Estado</th><th>Acoes</th></tr>
   </thead>
@@ -60,4 +63,5 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}

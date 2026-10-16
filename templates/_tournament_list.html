@@ -1,0 +1,21 @@
+{# Shared by every public list. Expects `rows` (view.row dicts), already in
+   the order to show them -- upcoming runs forwards, the archive backwards --
+   so the month headings simply follow that order. One <tbody> per month, so
+   each heading labels exactly the rows under it. The wrapper carries the
+   card's rounded corners, which a table cannot clip its own rows to. #}
+<div class="list-card">
+<table class="tournament-table">
+  <thead class="sr-only">
+    <tr><th scope="col">Data</th><th scope="col">Torneio</th><th scope="col">Ritmo</th><th scope="col">Links</th></tr>
+  </thead>
+  {% for t in rows %}
+  {% if loop.changed(t.month_label) %}
+  {% if not loop.first %}</tbody>{% endif %}
+  <tbody>
+    <tr class="month-row"><th colspan="4" scope="rowgroup">{{ t.month_label }}</th></tr>
+  {% endif %}
+    {% include "row.html" %}
+  {% if loop.last %}</tbody>{% endif %}
+  {% endfor %}
+</table>
+</div>

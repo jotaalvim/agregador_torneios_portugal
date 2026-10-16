@@ -1,7 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Torneio submetido | Torneios Xadrez Portugal{% endblock %}
 {% block content %}
-<h1>Obrigado!</h1>
-<p>O torneio foi submetido e vai ser revisto por um administrador antes de aparecer no site.</p>
-<p><a href="/">Voltar aos torneios</a></p>
+<div class="narrow narrow-sm">
+  <div class="card success">
+    <svg class="success-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"/><path d="m7.5 12.3 3 3 6-6.3"/></svg>
+    <h1>Obrigado!</h1>
+    <p>O torneio foi submetido e vai ser revisto por um administrador antes de aparecer no site.</p>
+    <p><a class="btn" href="/">Voltar aos torneios</a></p>
+  </div>
+</div>
 {% endblock %}

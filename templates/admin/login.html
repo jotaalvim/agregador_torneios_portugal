@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Login | Torneios Xadrez Portugal{% endblock %}
 {% block content %}
+<div class="narrow narrow-sm">
 <h1>Area de administracao</h1>
 <form method="post" action="/admin/login" class="form">
   {% if error %}<p class="error">{{ error }}</p>{% endif %}
@@ -14,4 +15,5 @@
   </div>
   <button type="submit">Entrar</button>
 </form>
+</div>
 {% endblock %}

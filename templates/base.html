@@ -3,6 +3,9 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0b1120" media="(prefers-color-scheme: dark)">
     <title>{% block title %}Torneios Xadrez Portugal{% endblock %}</title>
     <meta name="description" content="{% block description %}Torneios de xadrez no Norte de Portugal: Braga, Porto, Viana do Castelo e mais. Calendario atualizado por clubes e associacoes.{% endblock %}">
     <meta property="og:site_name" content="Torneios Xadrez Portugal">
@@ -12,40 +15,66 @@
     <meta property="og:locale" content="pt_PT">
     <link rel="icon" href="/static/logo.jpg" type="image/jpeg">
     <link rel="canonical" href="{{ request.url }}">
-    <link rel="stylesheet" href="/static/css/style.css">
+    {# Bump ?v= whenever style.css changes along with the markup: nothing sets
+       Cache-Control on /static, so browsers may otherwise pair new HTML with
+       a heuristically cached old stylesheet for hours. #}
+    <link rel="stylesheet" href="/static/css/style.css?v=2">
     {% if goatcounter_script_url and goatcounter_endpoint %}
     <script>window.goatcounter = {allow_local: true}</script>
     <script data-goatcounter="{{ goatcounter_endpoint }}" async src="{{ goatcounter_script_url }}"></script>
     {% endif %}
   </head>
   <body class="{% block body_class %}{% endblock %}">
-    <header>
-      <a class="brand" href="/">
-        <img src="/static/logo.jpg" alt="Associacao de Xadrez do Distrito de Braga" class="logo">
-        <span>Torneios Xadrez Portugal</span>
-      </a>
-      <nav class="site-nav">
-        <a href="/">Todos</a>
-        {% for d in districts %}
-        <a href="/distrito/{{ d.slug }}">{{ d.name }}</a>
-        {% endfor %}
-        <a href="/submeter" class="nav-cta">+ Adicionar torneio</a>
-        <a href="/calendario" class="nav-calendario">
-          <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.6" y="3" width="12.8" height="11.4" rx="1.6"/><path d="M1.6 6.6h12.8M5 1.6v2.8M11 1.6v2.8"/></svg>Calendario
+    <a class="skip-link" href="#conteudo">Saltar para o conteudo</a>
+
+    {% set path = request.url.path %}
+    <header class="site-header">
+      <div class="wrap site-header-inner">
+        <a class="brand" href="/">
+          <img src="/static/logo.jpg" alt="Associacao de Xadrez do Distrito de Braga" class="logo" width="36" height="36">
+          <span class="brand-name">Torneios Xadrez<span class="brand-tail"> Portugal</span></span>
         </a>
-      </nav>
+        {# Districts are not in here: they are filters on the list and the
+           calendar (see _district_chips.html), not places to go. #}
+        <nav class="site-nav" aria-label="Principal">
+          <a href="/" class="nav-link{% if path == '/' or path.startswith('/distrito/') or path.startswith('/torneios/') %} is-active{% endif %}"{% if path == '/' %} aria-current="page"{% endif %}>Torneios</a>
+          <a href="/calendario" class="nav-link{% if path == '/calendario' %} is-active{% endif %}"{% if path == '/calendario' %} aria-current="page"{% endif %}>Calendario</a>
+          <a href="/submeter" class="btn btn-sm nav-cta" aria-label="Adicionar torneio">
+            <svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3v10M3 8h10"/></svg>
+            <span class="nav-cta-label">Adicionar<span class="nav-cta-extra"> torneio</span></span>
+          </a>
+        </nav>
+      </div>
     </header>
 
-    <main>
+    <main id="conteudo" class="wrap">
       {% block content %}{% endblock %}
     </main>
 
-    <footer>
-      Torneios de xadrez do Norte de Portugal &middot; <a href="mailto:joaoalvim179@proton.me">Contacto</a> &middot; <a href="/admin/login">Area de administracao</a>
+    <footer class="site-footer">
+      <div class="wrap site-footer-inner">
+        <p>Torneios de xadrez do Norte de Portugal</p>
+        <nav aria-label="Rodape">
+          <a href="/calendario">Calendario</a>
+          <a href="mailto:joaoalvim179@proton.me">Contacto</a>
+          <a href="/admin/login">Area de administracao</a>
+        </nav>
+      </div>
     </footer>
 
     <div class="bottom-bars">
       {% block admin_nav %}{% endblock %}
     </div>
+
+    <script>
+      // On narrow screens the district chips are one row that scrolls
+      // sideways; start it scrolled so the active district is in view.
+      document.querySelectorAll(".chips .is-active").forEach(function (el) {
+        var row = el.parentElement;
+        if (row.scrollWidth > row.clientWidth) {
+          row.scrollLeft = el.offsetLeft - (row.clientWidth - el.offsetWidth) / 2;
+        }
+      });
+    </script>
   </body>
 </html>

@@ -3,6 +3,7 @@
 {% block body_class %}has-admin-nav{% endblock %}
 {% block admin_nav %}{% include "admin/_nav.html" %}{% endblock %}
 {% block content %}
+<div class="narrow">
 <h1>Editar torneio</h1>
 
 <form method="post" action="/admin/tournaments/{{ values.id }}/edit" class="form">
@@ -24,13 +25,13 @@
     {% if errors.title %}<p class="error">{{ errors.title }}</p>{% endif %}
   </div>
 
-  <div class="field">
+  <div class="field field-half">
     <label for="district">Distrito *</label>
     <input type="text" id="district" name="district" value="{{ values.district }}" required>
     {% if errors.district %}<p class="error">{{ errors.district }}</p>{% endif %}
   </div>
 
-  <div class="field">
+  <div class="field field-half">
     <label for="date">Data *</label>
     <input type="date" id="date" name="date" value="{{ values.date }}" required>
     {% if errors.date %}<p class="error">{{ errors.date }}</p>{% endif %}
@@ -42,36 +43,36 @@
     {% if errors.location %}<p class="error">{{ errors.location }}</p>{% endif %}
   </div>
 
-  <div class="field">
+  <div class="field field-half">
     <label for="time_control">Ritmo de jogo *</label>
     <input type="text" id="time_control" name="time_control" value="{{ values.time_control }}" required>
     {% if errors.time_control %}<p class="error">{{ errors.time_control }}</p>{% endif %}
   </div>
 
-  <div class="field">
+  <div class="field field-half">
     <label for="organizer">Organizacao</label>
     <input type="text" id="organizer" name="organizer" value="{{ values.organizer }}">
   </div>
 
-  <div class="field">
+  <div class="field field-half">
     <label for="chess_results_url">Link chess-results.com</label>
     <input type="url" id="chess_results_url" name="chess_results_url" value="{{ values.chess_results_url }}">
     {% if errors.chess_results_url %}<p class="error">{{ errors.chess_results_url }}</p>{% endif %}
   </div>
 
-  <div class="field">
+  <div class="field field-half">
     <label for="regulation_url">Link do regulamento</label>
     <input type="url" id="regulation_url" name="regulation_url" value="{{ values.regulation_url }}">
     {% if errors.regulation_url %}<p class="error">{{ errors.regulation_url }}</p>{% endif %}
   </div>
 
-  <div class="field">
+  <div class="field field-half">
     <label for="registration_url">Link de inscricao</label>
     <input type="url" id="registration_url" name="registration_url" value="{{ values.registration_url }}">
     {% if errors.registration_url %}<p class="error">{{ errors.registration_url }}</p>{% endif %}
   </div>
 
-  <div class="field">
+  <div class="field field-half">
     <label for="link">Site do torneio</label>
     <input type="url" id="link" name="link" value="{{ values.link }}">
     {% if errors.link %}<p class="error">{{ errors.link }}</p>{% endif %}
@@ -94,4 +95,5 @@
 
   <button type="submit">Guardar</button>
 </form>
+</div>
 {% endblock %}

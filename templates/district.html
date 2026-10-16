@@ -3,24 +3,26 @@
 {% block og_title %}Torneios de xadrez: {{ district }}{% endblock %}
 {% block description %}Calendario de torneios de xadrez no distrito de {{ district }}, Norte de Portugal.{% endblock %}
 {% block content %}
-<h1>{{ district }}</h1>
+{% set slug = request.path_params.slug %}
+<div class="page-head">
+  <h1>{{ district }}</h1>
+  {% with view_mode = "list" %}{% include "_view_toggle.html" %}{% endwith %}
+</div>
 
-<form class="search" method="get" action="/distrito/{{ request.path_params.slug }}" role="search">
-  <input type="search" name="q" value="{{ q }}" placeholder="Pesquisar por nome, local ou clube&hellip;" aria-label="Pesquisar torneios">
-  <button type="submit">Pesquisar</button>
-  {% if q %}<a class="search-clear" href="/distrito/{{ request.path_params.slug }}">Limpar</a>{% endif %}
+<form class="search" method="get" action="/distrito/{{ slug }}" role="search">
+  <div class="search-field">
+    <svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="7" cy="7" r="4.6"/><path d="m10.4 10.4 3.4 3.4"/></svg>
+    <input type="search" name="q" value="{{ q }}" placeholder="Pesquisar por nome, local ou clube&hellip;" aria-label="Pesquisar torneios">
+    <button type="submit">Pesquisar</button>
+  </div>
+  {% if q %}<a class="search-clear" href="/distrito/{{ slug }}">Limpar</a>{% endif %}
 </form>
 
-<h2>Proximos</h2>
+{% with chips_mode = "list", active_slug = slug %}{% include "_district_chips.html" %}{% endwith %}
+
+<h2 class="section-title">Proximos{% if upcoming %} <span class="count">{{ upcoming|length }}</span>{% endif %}</h2>
 {% if upcoming %}
-<table class="tournament-table">
-  <thead>
-    <tr><th>Data</th><th>Torneio</th><th>Local</th><th>Ritmo</th><th>Link</th></tr>
-  </thead>
-  <tbody>
-    {% for t in upcoming %}{% include "row.html" %}{% endfor %}
-  </tbody>
-</table>
+{% with rows = upcoming %}{% include "_tournament_list.html" %}{% endwith %}
 {% elif q %}
 <p class="empty">Sem torneios proximos para &ldquo;{{ q }}&rdquo;.</p>
 {% else %}
@@ -29,17 +31,15 @@
 
 {% if past %}
 <details class="archive">
-  <summary>Terminados</summary>
-  <table class="tournament-table">
-    <thead>
-      <tr><th>Data</th><th>Torneio</th><th>Local</th><th>Ritmo</th><th>Link</th></tr>
-    </thead>
-    <tbody>
-      {% for t in past %}{% include "row.html" %}{% endfor %}
-    </tbody>
-  </table>
+  <summary>Terminados <span class="count">{{ past|length }}</span></summary>
+  {% with rows = past %}{% include "_tournament_list.html" %}{% endwith %}
 </details>
 {% endif %}
 
-<p class="links"><a href="/calendario.ics?distrito={{ request.path_params.slug }}">Subscrever calendario (.ics)</a></p>
+<p class="page-actions">
+  <a class="btn btn-secondary" href="/calendario.ics?distrito={{ slug }}">
+    <svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.6" y="3" width="12.8" height="11.4" rx="1.6"/><path d="M1.6 6.6h12.8M5 1.6v2.8M11 1.6v2.8M8 8.6v3.6M6.2 10.4h3.6"/></svg>
+    Subscrever calendario (.ics)
+  </a>
+</p>
 {% endblock %}

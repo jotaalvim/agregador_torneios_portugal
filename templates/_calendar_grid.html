@@ -1,7 +1,8 @@
 <div class="year-calendar">
   {% for m in months %}
+  <div class="month-card">
   <table class="mini-month">
-    <caption>{{ m.name }}</caption>
+    <caption>{{ m.name }} <span class="cap-year">{{ m.year }}</span></caption>
     <thead>
       <tr>{% for w in ["S", "T", "Q", "Q", "S", "S", "D"] %}<th>{{ w }}</th>{% endfor %}</tr>
     </thead>
@@ -46,5 +47,6 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
   {% endfor %}
 </div>

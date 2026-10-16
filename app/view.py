@@ -8,6 +8,8 @@ MONTH_NAMES_PT = [
     "JANEIRO", "FEVEREIRO", "MARCO", "ABRIL", "MAIO", "JUNHO",
     "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO",
 ]
+# Indexed by date.weekday() (Monday = 0), for the date tile in the list.
+WEEKDAYS_PT = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"]
 
 # Colour slot per district, used by the calendar grid (see --district-N in
 # style.css). The mapping is by slug and deliberately fixed: a district keeps
@@ -94,6 +96,11 @@ def row(t: Tournament, today: date, page_url: str | None = None) -> dict:
         "description": t.description,
         "date": t.date.isoformat(),
         "date_fmt": t.date.strftime("%d/%m/%Y"),
+        "day": t.date.day,
+        "weekday_short": WEEKDAYS_PT[t.date.weekday()],
+        "month_short": MONTH_NAMES_PT[t.date.month - 1][:3],
+        # Lists are grouped under one heading per month (see _tournament_list.html).
+        "month_label": f"{MONTH_NAMES_PT[t.date.month - 1]} {t.date.year}",
         "finished": t.date < today,
         "is_today": t.date == today,
         "share_text": share_text(t, page_url),

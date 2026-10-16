@@ -3,50 +3,35 @@
 {% block og_title %}Calendario de torneios{% endblock %}
 {% block description %}Vista anual do calendario de torneios de xadrez no Norte de Portugal, mes a mes.{% endblock %}
 {% block content %}
-<h1>Calendario</h1>
-
-{# Doubles as the legend for the colours in the grid below: every district
-   shown there appears here next to its own swatch. #}
-<div class="calendar-filters">
-  <a href="/calendario" class="{% if not selected_district %}active{% endif %}">Todos</a>
-  {% for d in districts %}
-  <a href="/calendario?distrito={{ d.slug }}" class="d-{{ d.slot }} {% if selected_district == d.slug %}active{% endif %}">
-    <span class="district-dot" aria-hidden="true"></span>{{ d.name }}
-  </a>
-  {% endfor %}
+<div class="page-head">
+  <h1>Calendario</h1>
+  {% with view_mode = "calendar", slug = selected_district %}{% include "_view_toggle.html" %}{% endwith %}
 </div>
+
+{% with chips_mode = "calendar", active_slug = selected_district %}{% include "_district_chips.html" %}{% endwith %}
 
 {% include "_calendar_grid.html" %}
 
-<h2>Lista de torneios</h2>
+<h2 class="section-title">Lista de torneios{% if upcoming %} <span class="count">{{ upcoming|length }}</span>{% endif %}</h2>
 {% if upcoming %}
-<table class="tournament-table">
-  <thead>
-    <tr><th>Data</th><th>Torneio</th><th>Local</th><th>Ritmo</th><th>Link</th></tr>
-  </thead>
-  <tbody>
-    {% for t in upcoming %}{% include "row.html" %}{% endfor %}
-  </tbody>
-</table>
+{% with rows = upcoming %}{% include "_tournament_list.html" %}{% endwith %}
 {% else %}
 <p class="empty">Sem torneios agendados.</p>
 {% endif %}
 
 {% if past %}
 <details class="archive">
-  <summary>Terminados</summary>
-  <table class="tournament-table">
-    <thead>
-      <tr><th>Data</th><th>Torneio</th><th>Local</th><th>Ritmo</th><th>Link</th></tr>
-    </thead>
-    <tbody>
-      {% for t in past %}{% include "row.html" %}{% endfor %}
-    </tbody>
-  </table>
+  <summary>Terminados <span class="count">{{ past|length }}</span></summary>
+  {% with rows = past %}{% include "_tournament_list.html" %}{% endwith %}
 </details>
 {% endif %}
 
-<p class="links"><a href="/calendario.ics{% if selected_district %}?distrito={{ selected_district }}{% endif %}">Subscrever calendario (.ics)</a></p>
+<p class="page-actions">
+  <a class="btn btn-secondary" href="/calendario.ics{% if selected_district %}?distrito={{ selected_district }}{% endif %}">
+    <svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.6" y="3" width="12.8" height="11.4" rx="1.6"/><path d="M1.6 6.6h12.8M5 1.6v2.8M11 1.6v2.8M8 8.6v3.6M6.2 10.4h3.6"/></svg>
+    Subscrever calendario (.ics)
+  </a>
+</p>
 
 <script>
   (function () {
