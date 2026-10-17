@@ -19,7 +19,7 @@
        Cache-Control on /static, so browsers may otherwise pair new HTML with
        a heuristically cached old stylesheet for hours. #}
     <link rel="preload" href="/static/fonts/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="/static/css/style.css?v=4">
+    <link rel="stylesheet" href="/static/css/style.css?v=5">
     {% if goatcounter_script_url and goatcounter_endpoint %}
     <script>window.goatcounter = {allow_local: true}</script>
     <script data-goatcounter="{{ goatcounter_endpoint }}" async src="{{ goatcounter_script_url }}"></script>
@@ -41,12 +41,11 @@
           <span class="brand-name">Torneios Xadrez<span class="brand-tail"> Portugal</span></span>
         </a>
         {# Districts are not in here: they are filters on the list and the
-           calendar (see _district_chips.html), not places to go. The
-           chessboard edge under this band is drawn in CSS (.site-header::after). #}
+           calendar (see _district_chips.html), not places to go. #}
         <nav class="site-nav" aria-label="Principal">
           <a href="{{ '/distrito/' ~ nav_slug if nav_slug else '/' }}" class="nav-link{% if path == '/' or path.startswith('/distrito/') or path.startswith('/torneios/') %} is-active{% endif %}"{% if path == '/' or path.startswith('/distrito/') %} aria-current="page"{% endif %}>Torneios</a>
           <a href="{{ '/calendario?distrito=' ~ nav_slug if nav_slug else '/calendario' }}" class="nav-link{% if path == '/calendario' %} is-active{% endif %}"{% if path == '/calendario' %} aria-current="page"{% endif %}>Calendario</a>
-          <a href="/submeter" class="nav-cta" aria-label="Adicionar torneio">+<span class="nav-cta-label"> Adicionar<span class="nav-cta-extra"> torneio</span></span></a>
+          <a href="/submeter" class="nav-cta" aria-label="Adicionar torneio">+ Adicionar<span class="nav-cta-extra"> torneio</span></a>
         </nav>
       </div>
     </header>

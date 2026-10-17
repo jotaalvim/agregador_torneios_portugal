@@ -34,13 +34,18 @@
   --hover: #f4f6f9;
   --highlight-row: #eaf0fd;  /* rows lit up from the calendar */
 
-  --navy: #1e3a8a;           /* the masthead band -- the site's colour from the start */
-  --checker: #ffffff;        /* light squares of the board edge under the band */
+  --navy: #1e3a8a;           /* the site's colour from the start: the admin bar */
   --link: #1d4ed8;
   --btn: #1e3a8a;
   --btn-hover: #172e6e;
   --on-btn: #ffffff;
   --highlight: #1e3a8a;      /* calendar day lit up from a hovered list row */
+
+  --masthead: #ffffff;       /* the header's surface */
+  --masthead-edge: #1e3a8a;  /* the thin brand edge along its top */
+  --masthead-brand: #1e3a8a; /* current section, call to action: 10.4:1 */
+  --masthead-quiet: #c9d0db; /* emblem ring and hover bar: seen, but well short of the navy */
+  --emblem-filter: none;
 
   --today: #ea580c;
   --today-soft: #f8cab1;     /* --today at 32% over white -- a stronger mix than the
@@ -107,11 +112,19 @@
     --highlight-row: #172443;
 
     --navy: #1b326f;
-    --checker: #34508f;      /* lighter than the band, or the board edge vanishes */
     --link: #8db3ff;
     --btn: #2f62e0;
     --btn-hover: #2554c7;
     --highlight: #2f62e0;
+
+    /* One step above the page, or the header dissolves into it. The emblem
+       is dimmed to about the wordmark's brightness, so its white disc is
+       not the brightest thing on the screen. */
+    --masthead: #172238;
+    --masthead-edge: #2f62e0;  /* the button blue: the pale text blue glares as a line */
+    --masthead-brand: #8db3ff; /* 7.6:1 on the header */
+    --masthead-quiet: #3a4864;
+    --emblem-filter: brightness(.9);
 
     --today: #fb923c;
     --today-soft: #573e30;     /* --today at 30% over the dark page */
@@ -257,71 +270,108 @@ a:hover { text-decoration-color: currentColor; text-decoration-thickness: 2px; }
 /* ==========================================================================
    Masthead
    ========================================================================== */
-.site-header { background: var(--navy); color: #fff; }
-/* The edge of a board: two rows of squares where the band meets the page.
-   One row on its own reads as a dashed line; two read as a chessboard. */
-.site-header::after {
-  content: "";
-  display: block;
-  height: 10px;
-  background: conic-gradient(var(--navy) 25%, var(--checker) 0 50%, var(--navy) 0 75%, var(--checker) 0) 0 0 / 10px 10px;
+/* White like the page, closed by the same hairline that separates the rows.
+   The site's navy is kept to three places -- a thin edge along the top, the
+   bar under the current section and the outline of the one action -- so the
+   header is plainly branded without going back to a coloured band. The
+   action is outlined, not filled, so the search button below stays the
+   single solid button above the fold. */
+.site-header {
+  border-top: 3px solid var(--masthead-edge);
+  border-bottom: 1px solid var(--line);
+  background: var(--masthead);
 }
-.site-header :focus-visible { outline-color: #fff; }
 .site-header-inner {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
   gap: 1rem;
   min-height: 64px;
 }
 .brand {
+  align-self: center;
   display: inline-flex;
   align-items: center;
-  gap: .7rem;
+  gap: .8rem;
   min-width: 0;
-  color: #fff;
+  color: var(--fg);
   font-family: var(--display);
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1;
   text-decoration: none;
 }
+/* cover, not contain: the emblem sits in a canvas wider than it is tall,
+   and contain would leave it floating small inside its own disc. */
 .brand .logo {
   flex: 0 0 auto;
   display: block;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--masthead-quiet);
   border-radius: 50%;
-  object-fit: contain;
+  object-fit: cover;
   background: #fff;   /* the logo is drawn on white */
+  filter: var(--emblem-filter);
 }
-.brand-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.site-nav { display: flex; align-items: center; gap: 1.4rem; flex: 0 0 auto; }
+/* The emblem is the association's, the name is the site's: a hairline
+   between them, the way a federation sets a crest beside its title. The
+   vertical padding also keeps the "g" of Portugal clear of the clip. */
+.brand-name {
+  padding: .3rem 0 .3rem .8rem;
+  border-left: 1px solid var(--line);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.site-nav { display: flex; align-items: stretch; gap: .8rem; flex: 0 0 auto; }
 .nav-link {
-  padding: .3rem 0;
-  color: rgba(255, 255, 255, .8);
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 .5rem;
+  color: var(--muted);
   font-size: .95rem;
   font-weight: 600;
   text-decoration: none;
 }
-.nav-link:hover { color: #fff; }
-.nav-link.is-active {
-  color: #fff;
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: .5em;
+/* One bar, as wide as the label, resting on the closing hairline. The
+   current section gets it in navy; a hovered one gets it in pale grey, so
+   hover never passes for a second current section -- nor for the ink
+   underline of the filters below. Every label keeps the same weight, so the
+   nav doesn't shift sideways between pages. */
+.nav-link::after {
+  content: "";
+  position: absolute;
+  right: .5rem;
+  bottom: -1px;
+  left: .5rem;
+  height: 3px;
 }
+.nav-link:hover { color: var(--masthead-brand); }
+.nav-link:hover::after { background: var(--masthead-quiet); }
+.nav-link.is-active { color: var(--masthead-brand); }
+.nav-link.is-active::after { background: var(--masthead-brand); }
+/* Forced colours (Windows high contrast) repaint backgrounds as Canvas, which
+   would turn the bar into a gap in the hairline; draw it in text colour. */
+@media (forced-colors: active) {
+  .nav-link.is-active::after { background: CanvasText; }
+}
+.nav-link:focus-visible { outline-offset: -3px; }
 .nav-cta {
-  padding: .45rem .8rem;
+  align-self: center;
+  margin-left: .5rem;
+  padding: .5rem .95rem;
+  border: 1px solid var(--masthead-brand);
   border-radius: var(--radius);
-  background: #fff;
-  color: #1e3a8a;
+  color: var(--masthead-brand);
   font-size: .92rem;
-  font-weight: 700;
+  font-weight: 600;
+  line-height: 1.2;
   white-space: nowrap;
   text-decoration: none;
 }
-.nav-cta:hover { background: #e3e9f6; }
+.nav-cta:hover { border-color: var(--btn); background: var(--btn); color: var(--on-btn); }
 
 /* ==========================================================================
    Buttons
@@ -930,6 +980,18 @@ button.link-btn.reject { color: var(--danger); }
   .t-loc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 
+/* Tablets: both sections and the full call to action stay. The wordmark
+   tightens, and below 690px drops "Portugal" rather than being cut short. */
+@media (min-width: 641px) and (max-width: 820px) {
+  .brand { gap: .7rem; font-size: 1.4rem; }
+  .brand .logo { width: 40px; height: 40px; }
+  .brand-name { padding-left: .7rem; }
+  .site-nav { gap: .4rem; }
+}
+@media (min-width: 641px) and (max-width: 690px) {
+  .brand-tail { display: none; }
+}
+
 @media (max-width: 640px) {
   :root { --gutter: 1rem; }
   main { padding-top: 1.4rem; }
@@ -939,8 +1001,11 @@ button.link-btn.reject { color: var(--danger); }
   .nav-link { display: none; }
   .nav-cta-extra { display: none; }
   .tabs { display: flex; }
-  .brand { font-size: 1.3rem; }
-  .brand .logo { width: 36px; height: 36px; }
+  .site-header-inner { min-height: 58px; }
+  .brand { gap: .65rem; font-size: 1.35rem; }
+  .brand .logo { width: 38px; height: 38px; }
+  .brand-name { padding-left: .65rem; }
+  .nav-cta { margin-left: 0; padding: .45rem .75rem; }
 
   /* One row of filters that scrolls sideways instead of wrapping into
      several, bled to the screen edges. */
@@ -970,13 +1035,17 @@ button.link-btn.reject { color: var(--danger); }
   .mini-month td .day-marks .mark { width: 2.5px; height: 3px; }
 }
 
-/* Phones: the brand drops its last word before the call to action loses
-   its label -- "+ Adicionar" is what tells people they can add one. */
+/* Phones: the brand drops its last word, and at the narrowest the lock-up
+   tightens, so the call to action never loses its word -- a bare "+" does
+   not say what it adds. */
 @media (max-width: 440px) {
   .brand-tail { display: none; }
 }
 @media (max-width: 340px) {
-  .nav-cta-label { display: none; }
+  .brand { gap: .55rem; font-size: 1.25rem; }
+  .brand .logo { width: 34px; height: 34px; }
+  .brand-name { padding-left: .55rem; }
+  .nav-cta { padding-inline: .6rem; font-size: .88rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
