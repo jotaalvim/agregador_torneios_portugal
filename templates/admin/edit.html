@@ -1,13 +1,44 @@
 {% extends "base.html" %}
-{% block title %}Editar torneio | Torneios Xadrez Portugal{% endblock %}
+{% block title %}{% if correction is defined %}Rever correcao{% else %}Editar torneio{% endif %} | Torneios Xadrez Portugal{% endblock %}
 {% block body_class %}has-admin-nav{% endblock %}
 {% block admin_nav %}{% include "admin/_nav.html" %}{% endblock %}
 {% block content %}
+{# Reviewing a visitor's correction reuses this form: the suggested values
+   are already filled in, and each changed field shows what is live now.
+   Highlights only make sense while the correction is still pending. #}
+{% set reviewing = correction is defined and correction_pending %}
+{% set ch = changes if reviewing else {} %}
+{% macro was(change) -%}
+  {%- if change %}
+  <p class="was">Valor atual: {{ change.current_display }}</p>
+  {%- if change.stale %}
+  <p class="was stale">Este campo mudou depois da sugestao. Quando foi enviada, o valor era: {{ change.old_display }}</p>
+  {%- endif %}
+  {%- endif %}
+{%- endmacro %}
 <div class="narrow">
-<h1>Editar torneio</h1>
+<h1>{% if correction is defined %}Rever correcao{% else %}Editar torneio{% endif %}</h1>
+
+{% if correction is defined %}
+<section class="correction-box" aria-label="Correcao enviada por um visitante">
+  <p><strong>Enviada{% if correction.created_at %} a {{ correction.created_at.strftime("%d/%m/%Y") }}{% endif %}</strong>
+    por {{ correction.submitted_by_name or "anonimo" }}{% if correction.submitted_by_email %} &middot; <a href="mailto:{{ correction.submitted_by_email|urlencode }}">{{ correction.submitted_by_email }}</a>{% endif %}</p>
+  {% if not correction_pending %}<p>Esta correcao ja foi tratada ({{ correction.status.value }}). O formulario mostra o torneio como esta agora.</p>{% endif %}
+  {% if correction.cancelled %}<p class="change-flag">Diz que o torneio foi cancelado ou adiado.</p>{% endif %}
+  {% if correction.note %}<p class="change-note">{{ correction.note }}</p>{% endif %}
+  {% if correction.source_url %}<p>Fonte: <a href="{{ correction.source_url }}" rel="noopener nofollow">{{ correction.source_url }}</a></p>{% endif %}
+  {% if reviewing and ch %}<p>Os campos sugeridos estao assinalados. Guardar aplica o que ficar no formulario, por isso podes ajustar antes.</p>{% endif %}
+  {% if reviewing and not ch %}<p>Nenhum campo alterado{% if correction.note %}, so a nota{% endif %}. Edita o que for preciso e guarda, ou marca como tratada.</p>{% endif %}
+  {% if reviewing and correction.cancelled %}<p>Nao ha um campo para cancelamentos: se foi adiado, muda a data; se foi cancelado, muda o estado para rejected para o tirar do site.</p>{% endif %}
+</section>
+{% endif %}
+
+{% if errors.general %}<p class="error" role="alert">{{ errors.general }}</p>{% endif %}
 
 <form method="post" action="/admin/tournaments/{{ values.id }}/edit" class="form">
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  {% if version %}<input type="hidden" name="version" value="{{ version }}">{% endif %}
+  {% if reviewing %}<input type="hidden" name="correction_id" value="{{ correction.id }}">{% endif %}
 
   <div class="field">
     <label for="status">Estado</label>
@@ -19,68 +50,81 @@
     {% if errors.status %}<p class="error">{{ errors.status }}</p>{% endif %}
   </div>
 
-  <div class="field">
+  <div class="field{% if ch.title %} is-changed{% endif %}">
     <label for="title">Nome do torneio *</label>
     <input type="text" id="title" name="title" value="{{ values.title }}" required>
+    {{ was(ch.title) }}
     {% if errors.title %}<p class="error">{{ errors.title }}</p>{% endif %}
   </div>
 
-  <div class="field field-half">
+  <div class="field field-half{% if ch.district %} is-changed{% endif %}">
     <label for="district">Distrito *</label>
     <input type="text" id="district" name="district" value="{{ values.district }}" required>
+    {{ was(ch.district) }}
     {% if errors.district %}<p class="error">{{ errors.district }}</p>{% endif %}
   </div>
 
-  <div class="field field-half">
+  <div class="field field-half{% if ch.date %} is-changed{% endif %}">
     <label for="date">Data *</label>
     <input type="date" id="date" name="date" value="{{ values.date }}" required>
+    {{ was(ch.date) }}
     {% if errors.date %}<p class="error">{{ errors.date }}</p>{% endif %}
   </div>
 
-  <div class="field">
+  <div class="field{% if ch.location %} is-changed{% endif %}">
     <label for="location">Local *</label>
     <input type="text" id="location" name="location" value="{{ values.location }}" required>
+    {{ was(ch.location) }}
     {% if errors.location %}<p class="error">{{ errors.location }}</p>{% endif %}
   </div>
 
-  <div class="field field-half">
+  <div class="field field-half{% if ch.time_control %} is-changed{% endif %}">
     <label for="time_control">Ritmo de jogo *</label>
     <input type="text" id="time_control" name="time_control" value="{{ values.time_control }}" required>
+    {{ was(ch.time_control) }}
     {% if errors.time_control %}<p class="error">{{ errors.time_control }}</p>{% endif %}
   </div>
 
-  <div class="field field-half">
+  <div class="field field-half{% if ch.organizer %} is-changed{% endif %}">
     <label for="organizer">Organizacao</label>
     <input type="text" id="organizer" name="organizer" value="{{ values.organizer }}">
+    {{ was(ch.organizer) }}
+    {% if errors.organizer %}<p class="error">{{ errors.organizer }}</p>{% endif %}
   </div>
 
-  <div class="field field-half">
+  <div class="field field-half{% if ch.chess_results_url %} is-changed{% endif %}">
     <label for="chess_results_url">Link chess-results.com</label>
     <input type="url" id="chess_results_url" name="chess_results_url" value="{{ values.chess_results_url }}">
+    {{ was(ch.chess_results_url) }}
     {% if errors.chess_results_url %}<p class="error">{{ errors.chess_results_url }}</p>{% endif %}
   </div>
 
-  <div class="field field-half">
+  <div class="field field-half{% if ch.regulation_url %} is-changed{% endif %}">
     <label for="regulation_url">Link do regulamento</label>
     <input type="url" id="regulation_url" name="regulation_url" value="{{ values.regulation_url }}">
+    {{ was(ch.regulation_url) }}
     {% if errors.regulation_url %}<p class="error">{{ errors.regulation_url }}</p>{% endif %}
   </div>
 
-  <div class="field field-half">
+  <div class="field field-half{% if ch.registration_url %} is-changed{% endif %}">
     <label for="registration_url">Link de inscricao</label>
     <input type="url" id="registration_url" name="registration_url" value="{{ values.registration_url }}">
+    {{ was(ch.registration_url) }}
     {% if errors.registration_url %}<p class="error">{{ errors.registration_url }}</p>{% endif %}
   </div>
 
-  <div class="field field-half">
+  <div class="field field-half{% if ch.link %} is-changed{% endif %}">
     <label for="link">Site do torneio</label>
     <input type="url" id="link" name="link" value="{{ values.link }}">
+    {{ was(ch.link) }}
     {% if errors.link %}<p class="error">{{ errors.link }}</p>{% endif %}
   </div>
 
-  <div class="field">
+  <div class="field{% if ch.description %} is-changed{% endif %}">
     <label for="description">Descricao</label>
     <textarea id="description" name="description" rows="4">{{ values.description }}</textarea>
+    {{ was(ch.description) }}
+    {% if errors.description %}<p class="error">{{ errors.description }}</p>{% endif %}
   </div>
 
   <p class="notice">
@@ -93,7 +137,20 @@
     <textarea id="admin_note" name="admin_note" rows="2">{{ values.admin_note }}</textarea>
   </div>
 
-  <button type="submit">Guardar</button>
+  <button type="submit">{% if reviewing %}Guardar e aplicar{% else %}Guardar{% endif %}</button>
 </form>
+
+{% if reviewing %}
+<div class="correction-actions">
+  <form method="post" action="/admin/correcoes/{{ correction.id }}/resolve" class="inline" onsubmit="return confirm('Fechar esta correcao sem alterar o torneio?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" class="link-btn">Marcar como tratada sem guardar</button>
+  </form>
+  <form method="post" action="/admin/correcoes/{{ correction.id }}/reject" class="inline" onsubmit="return confirm('Rejeitar esta correcao?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" class="link-btn reject">Rejeitar sugestao</button>
+  </form>
+</div>
+{% endif %}
 </div>
 {% endblock %}

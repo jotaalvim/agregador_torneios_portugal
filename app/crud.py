@@ -1,7 +1,9 @@
-from sqlalchemy import distinct, select
+from datetime import datetime, timezone
+
+from sqlalchemy import distinct, or_, select
 from sqlalchemy.orm import Session
 
-from .models import Status, Tournament
+from .models import Correction, CorrectionStatus, Status, Tournament
 from .utils import slugify
 
 
@@ -67,3 +69,51 @@ def set_status(db: Session, t: Tournament, status: Status) -> Tournament:
 def delete_tournament(db: Session, t: Tournament) -> None:
     db.delete(t)
     db.commit()
+
+
+def create_correction(db: Session, data: dict) -> Correction:
+    c = Correction(**data)
+    db.add(c)
+    db.commit()
+    db.refresh(c)
+    return c
+
+
+def get_correction(db: Session, correction_id: int) -> Correction | None:
+    return db.get(Correction, correction_id)
+
+
+def correction_belongs(c: Correction) -> bool:
+    """False for a correction left behind by a tournament deleted by hand in
+    SQL (which skips the ORM cascade) once SQLite gives that tournament's id
+    to a newer one: a correction is never older than its tournament."""
+    t = c.tournament
+    if t is None:
+        return False
+    return t.created_at is None or c.created_at is None or t.created_at <= c.created_at
+
+
+def list_pending_corrections(db: Session) -> list[Correction]:
+    # Same rule as correction_belongs, in SQL: the join drops corrections
+    # whose tournament is gone, the date check those whose id was reused.
+    return list(
+        db.scalars(
+            select(Correction)
+            .join(Correction.tournament)
+            .where(Correction.status == CorrectionStatus.pending)
+            .where(or_(
+                Tournament.created_at.is_(None),
+                Correction.created_at.is_(None),
+                Tournament.created_at <= Correction.created_at,
+            ))
+            .order_by(Correction.created_at, Correction.id)
+        )
+    )
+
+
+def set_correction_status(db: Session, c: Correction, status: CorrectionStatus) -> Correction:
+    c.status = status
+    c.resolved_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(c)
+    return c

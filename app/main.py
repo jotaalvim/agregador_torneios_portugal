@@ -7,6 +7,7 @@ from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse,
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+from starlette.datastructures import FormData
 from starlette.middleware.sessions import SessionMiddleware
 
 from . import crud, view
@@ -22,7 +23,7 @@ from .auth import (
 )
 from .config import GOATCOUNTER_ENDPOINT, GOATCOUNTER_SCRIPT_URL, SECRET_KEY, SESSION_HTTPS_ONLY
 from .database import Base, engine, get_db, run_migrations
-from .models import Status, Tournament
+from .models import Correction, CorrectionStatus, Status, Tournament
 from .seed import seed_if_empty
 from .utils import ics_escape, is_safe_url
 
@@ -109,10 +110,48 @@ def validate_submission(values: dict) -> dict:
         errors["submitted_by_email"] = "Email invalido."
 
     for field, limit in MAX_LENGTHS.items():
-        if field not in errors and len(values.get(field) or "") > limit:
+        # Browsers send textarea line breaks as CRLF; count each one once, as
+        # the public correction form does, or a text that fits there could
+        # fail when the admin saves it.
+        length = len((values.get(field) or "").replace("\r\n", "\n"))
+        if field not in errors and length > limit:
             errors[field] = f"Maximo de {limit} caracteres."
 
     return errors
+
+
+# Labels for the error summary at the top of the public correction form.
+CORRECTION_LABELS = view.FIELD_LABELS | {
+    "note": "Nota",
+    "source_url": "Fonte",
+    "submitted_by_name": "O teu nome",
+    "submitted_by_email": "O teu email",
+}
+
+CORRECTION_MAX_LENGTHS = {
+    "note": 2000,
+    "source_url": 500,
+    "submitted_by_name": 200,
+    "submitted_by_email": 200,
+}
+
+
+def get_published(db: Session, tournament_id: int) -> Tournament:
+    t = crud.get_tournament(db, tournament_id)
+    if t is None or t.status != Status.approved:
+        raise HTTPException(status_code=404, detail="Torneio nao encontrado")
+    return t
+
+
+def correction_ctx(t: Tournament, c: Correction) -> dict:
+    """What the admin edit form needs to show a visitor's correction: the
+    suggestion itself and, per changed field, the tournament's value now."""
+    changes = view.correction_changes(c, t)
+    return {
+        "correction": c,
+        "correction_pending": c.status == CorrectionStatus.pending,
+        "changes": {change["name"]: change for change in changes},
+    }
 
 
 @app.get("/healthz", response_class=PlainTextResponse)
@@ -329,6 +368,126 @@ def submit_thanks(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse(request, "submit_success.html", base_ctx(db, request))
 
 
+# --- Corrections from visitors -------------------------------------------
+
+
+@app.get("/torneios/{tournament_id}/corrigir", response_class=HTMLResponse)
+def correction_form(tournament_id: int, request: Request, db: Session = Depends(get_db)):
+    t = get_published(db, tournament_id)
+    ctx = base_ctx(db, request) | {
+        "t": view.row(t, date.today()),
+        "fields": view.correction_form_fields(t, {}, {}),
+        "values": {},
+        "errors": {},
+    }
+    return templates.TemplateResponse(request, "correct.html", ctx)
+
+
+async def read_form(request: Request) -> FormData:
+    """The raw posted form. FastAPI turns an empty form value into the
+    parameter's default, which would make clearing a field look the same as
+    not sending it; the correction form needs to tell those apart."""
+    return await request.form()
+
+
+@app.post("/torneios/{tournament_id}/corrigir", response_class=HTMLResponse)
+def correction_post(
+    tournament_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    form: FormData = Depends(read_form),
+):
+    t = get_published(db, tournament_id)
+
+    def text(name: str) -> str | None:
+        value = form.get(name)
+        return value if isinstance(value, str) else None
+
+    # None: the field was not sent at all, which is never a change.
+    # "": the visitor cleared it.
+    submitted = {name: text(name) for name in view.FIELD_LABELS}
+    extra = {
+        "cancelled": bool((text("cancelled") or "").strip()),
+        "note": view.normalize_value(text("note")),
+        "source_url": (text("source_url") or "").strip(),
+        "submitted_by_name": (text("submitted_by_name") or "").strip(),
+        "submitted_by_email": (text("submitted_by_email") or "").strip(),
+    }
+    confirmacao = text("confirmacao") or ""  # honeypot, as on /submeter
+
+    if confirmacao.strip():
+        logger.warning("Correcao bloqueada pelo honeypot (possivel falso positivo): %r", extra)
+        return RedirectResponse(f"/torneios/{t.id}/corrigir/obrigado", status_code=303)
+
+    # Compare with what the visitor was shown (posted back as seen_<field>),
+    # not with the tournament now: if it was edited while the form was open,
+    # their untouched fields must not turn into changes reverting that edit.
+    # Keeping the seen value as "old" lets the review flag such fields.
+    current = view.edit_values(t)
+    seen, changes = {}, {}
+    for name in view.FIELD_LABELS:
+        posted_seen = text(f"seen_{name}")
+        seen[name] = posted_seen if posted_seen is not None else current[name]
+        if submitted[name] is None:
+            continue
+        old = view.normalize_field(name, seen[name])
+        new = view.normalize_field(name, submitted[name])
+        if new != old:
+            changes[name] = {"old": old, "new": new}
+
+    # Validate the tournament as it would be with the changes applied, but
+    # only report fields the visitor touched: an old bad value elsewhere is
+    # not theirs to fix.
+    merged = {name: current[name] for name in view.FIELD_LABELS} | {
+        name: change["new"] for name, change in changes.items()
+    }
+    errors = {field: msg for field, msg in validate_submission(merged).items() if field in changes}
+    if not is_safe_url(extra["source_url"] or None):
+        errors["source_url"] = "Tem de comecar por http:// ou https://."
+    if extra["submitted_by_email"] and "@" not in extra["submitted_by_email"]:
+        errors["submitted_by_email"] = "Email invalido."
+    for field, limit in CORRECTION_MAX_LENGTHS.items():
+        if field not in errors and len(extra[field]) > limit:
+            errors[field] = f"Maximo de {limit} caracteres."
+    if not changes and not extra["cancelled"] and not extra["note"]:
+        errors["general"] = "Corrige pelo menos um campo ou escreve uma nota."
+    elif errors:
+        # The fields in error can be screens below the top of a long form.
+        labels = [label for field, label in CORRECTION_LABELS.items() if field in errors]
+        errors["general"] = "Ha campos por rever mais abaixo: " + ", ".join(labels) + "."
+
+    if errors:
+        values = {
+            name: (submitted[name] if submitted[name] is not None else seen[name])
+            for name in view.FIELD_LABELS
+        } | extra
+        ctx = base_ctx(db, request) | {
+            "t": view.row(t, date.today()),
+            "fields": view.correction_form_fields(t, values, errors, seen),
+            "values": values,
+            "errors": errors,
+        }
+        return templates.TemplateResponse(request, "correct.html", ctx, status_code=400)
+
+    crud.create_correction(db, {
+        "tournament_id": t.id,
+        "changes": changes,
+        "cancelled": extra["cancelled"],
+        "note": extra["note"] or None,
+        "source_url": extra["source_url"] or None,
+        "submitted_by_name": extra["submitted_by_name"] or None,
+        "submitted_by_email": extra["submitted_by_email"] or None,
+    })
+    return RedirectResponse(f"/torneios/{t.id}/corrigir/obrigado", status_code=303)
+
+
+@app.get("/torneios/{tournament_id}/corrigir/obrigado", response_class=HTMLResponse)
+def correction_thanks(tournament_id: int, request: Request, db: Session = Depends(get_db)):
+    t = get_published(db, tournament_id)
+    ctx = base_ctx(db, request) | {"t": view.row(t, date.today())}
+    return templates.TemplateResponse(request, "correct_success.html", ctx)
+
+
 # --- Admin -------------------------------------------------------------
 
 
@@ -442,8 +601,13 @@ def admin_new_post(
 
 @app.get("/admin", response_class=HTMLResponse, dependencies=[Depends(require_admin)])
 def admin_dashboard(request: Request, db: Session = Depends(get_db)):
+    corrections = [
+        {"c": c, "t": c.tournament, "changes": view.correction_changes(c, c.tournament)}
+        for c in crud.list_pending_corrections(db)
+    ]
     ctx = base_ctx(db, request) | {
         "pending": crud.list_pending(db),
+        "corrections": corrections,
         "all_tournaments": crud.list_all(db),
         "csrf_token": get_csrf_token(request),
     }
@@ -489,6 +653,7 @@ def admin_edit_form(tournament_id: int, request: Request, db: Session = Depends(
         "values": view.edit_values(t),
         "errors": {},
         "csrf_token": get_csrf_token(request),
+        "version": view.edit_version(t),
     }
     return templates.TemplateResponse(request, "admin/edit.html", ctx)
 
@@ -512,11 +677,32 @@ def admin_edit_post(
     description: str = Form(""),
     status: str = Form(...),
     admin_note: str = Form(""),
+    correction_id: str = Form(""),  # set when this edit reviews a visitor's correction
+    version: str = Form(""),  # view.edit_version when the form was loaded; scripts may omit it
 ):
     verify_csrf(request, csrf_token)
     t = crud.get_tournament(db, tournament_id)
     if t is None:
         raise HTTPException(status_code=404)
+    correction = crud.get_correction(db, int(correction_id)) if correction_id.strip().isdigit() else None
+    if correction is not None and (correction.tournament_id != t.id or not crud.correction_belongs(correction)):
+        correction = None
+
+    if version and version != view.edit_version(t):
+        # Saved from a page loaded before another save. Writing it would put
+        # back the older values of every field, so reload the current
+        # tournament (with the correction's suggestion on top, if any).
+        pending = correction is not None and correction.status == CorrectionStatus.pending
+        ctx = base_ctx(db, request) | {
+            "values": view.review_values(t, correction) if pending else view.edit_values(t),
+            "errors": {"general": "Este torneio foi alterado noutra janela depois de abrires esta pagina. "
+                                  "O formulario foi recarregado com a versao atual: confere e guarda outra vez."},
+            "csrf_token": get_csrf_token(request),
+            "version": view.edit_version(t),
+        }
+        if correction is not None:
+            ctx |= correction_ctx(t, correction)
+        return templates.TemplateResponse(request, "admin/edit.html", ctx, status_code=409)
 
     values = {
         "id": t.id,
@@ -543,7 +729,14 @@ def admin_edit_post(
     if errors:
         # Re-render with what the admin just typed (not the stale DB record),
         # so a single bad field doesn't wipe out the rest of the edit.
-        ctx = base_ctx(db, request) | {"values": values, "errors": errors, "csrf_token": get_csrf_token(request)}
+        ctx = base_ctx(db, request) | {
+            "values": values,
+            "errors": errors,
+            "csrf_token": get_csrf_token(request),
+            "version": version,
+        }
+        if correction is not None:
+            ctx |= correction_ctx(t, correction)
         return templates.TemplateResponse(request, "admin/edit.html", ctx, status_code=400)
 
     data = {
@@ -562,4 +755,47 @@ def admin_edit_post(
         "admin_note": admin_note.strip() or None,
     }
     crud.update_tournament(db, t, data)
+    if correction is not None and correction.status == CorrectionStatus.pending:
+        crud.set_correction_status(db, correction, CorrectionStatus.resolved)
     return RedirectResponse("/admin", status_code=303)
+
+
+@app.get("/admin/correcoes/{correction_id}", response_class=HTMLResponse, dependencies=[Depends(require_admin)])
+def admin_correction_review(correction_id: int, request: Request, db: Session = Depends(get_db)):
+    """The normal edit form, with the visitor's suggested values filled in.
+    Saving it applies whatever the admin keeps and closes the correction."""
+    c = crud.get_correction(db, correction_id)
+    if c is None or not crud.correction_belongs(c):
+        raise HTTPException(status_code=404)
+    ctx = base_ctx(db, request) | {
+        "values": view.review_values(c.tournament, c),
+        "errors": {},
+        "csrf_token": get_csrf_token(request),
+        "version": view.edit_version(c.tournament),
+    } | correction_ctx(c.tournament, c)
+    return templates.TemplateResponse(request, "admin/edit.html", ctx)
+
+
+def _close_correction(db: Session, request: Request, correction_id: int, csrf_token: str, status: CorrectionStatus):
+    verify_csrf(request, csrf_token)
+    c = crud.get_correction(db, correction_id)
+    if c is None:
+        raise HTTPException(status_code=404)
+    if c.status == CorrectionStatus.pending:
+        crud.set_correction_status(db, c, status)
+    return RedirectResponse("/admin", status_code=303)
+
+
+@app.post("/admin/correcoes/{correction_id}/resolve", dependencies=[Depends(require_admin)])
+def admin_correction_resolve(
+    correction_id: int, request: Request, db: Session = Depends(get_db), csrf_token: str = Form(...)
+):
+    """Handled without saving the form, e.g. a note acted on elsewhere."""
+    return _close_correction(db, request, correction_id, csrf_token, CorrectionStatus.resolved)
+
+
+@app.post("/admin/correcoes/{correction_id}/reject", dependencies=[Depends(require_admin)])
+def admin_correction_reject(
+    correction_id: int, request: Request, db: Session = Depends(get_db), csrf_token: str = Form(...)
+):
+    return _close_correction(db, request, correction_id, csrf_token, CorrectionStatus.rejected)

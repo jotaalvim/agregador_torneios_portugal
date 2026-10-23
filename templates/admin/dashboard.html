@@ -39,6 +39,47 @@
 <p class="empty">Sem submissoes pendentes.</p>
 {% endif %}
 
+<h2>Correcoes pendentes ({{ corrections|length }})</h2>
+{% if corrections %}
+<div class="table-scroll">
+<table class="data-table">
+  <thead>
+    <tr><th>Enviada</th><th>Torneio</th><th>Sugestao</th><th>Enviada por</th><th>Acoes</th></tr>
+  </thead>
+  <tbody>
+    {% for item in corrections %}{% set c = item.c %}
+    <tr>
+      <td class="nowrap" data-label="Enviada">{{ c.created_at.strftime("%d/%m/%Y") if c.created_at else "-" }}</td>
+      <td data-label="Torneio"><a href="/torneios/{{ item.t.id }}">{{ item.t.title }}</a> <span class="nowrap">&middot; {{ item.t.date.strftime("%d/%m/%Y") }}</span></td>
+      <td data-label="Sugestao">
+        {% if c.cancelled %}<p class="change-flag">Cancelado ou adiado</p>{% endif %}
+        {% if item.changes %}
+        <ul class="change-list">
+          {% for ch in item.changes %}
+          <li><strong>{{ ch.label }}:</strong> <del>{{ ch.old_display }}</del> &rarr; <ins>{{ ch.new_display }}</ins>{% if ch.whitespace_only %} <span class="muted-note">(so espacos ou mudancas de linha)</span>{% endif %}{% if ch.stale %} <span class="stale">(mudou depois)</span>{% endif %}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if c.note %}<p class="change-note">{{ c.note }}</p>{% endif %}
+        {% if c.source_url %}<a href="{{ c.source_url }}" rel="noopener nofollow">fonte</a>{% endif %}
+      </td>
+      <td data-label="Enviada por">{{ c.submitted_by_name or "-" }}{% if c.submitted_by_email %} &middot; {{ c.submitted_by_email }}{% endif %}</td>
+      <td class="actions" data-label="Acoes">
+        <a href="/admin/correcoes/{{ c.id }}">rever</a>
+        <form method="post" action="/admin/correcoes/{{ c.id }}/reject" class="inline" onsubmit="return confirm('Rejeitar esta correcao?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit" class="link-btn reject">rejeitar</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="empty">Sem correcoes pendentes.</p>
+{% endif %}
+
 <h2>Todos os torneios</h2>
 <div class="table-scroll">
 <table class="data-table">

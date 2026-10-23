@@ -39,6 +39,7 @@
         {% if t.link %}<li><a href="{{ t.link }}" rel="noopener">Pagina oficial</a></li>{% endif %}
         <li><a href="/torneios/{{ t.id }}/ics">Adicionar ao calendario (.ics)</a></li>
         <li><button type="button" class="link-btn btn-share" data-share-text="{{ t.share_text }}" data-share-title="{{ t.title }}"><span class="btn-label">Partilhar</span></button></li>
+        <li><a href="/torneios/{{ t.id }}/corrigir">Corrigir ou acrescentar informacao</a></li>
       </ul>
     </aside>
   </div>

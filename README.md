@@ -20,19 +20,37 @@ kept for reference — it is not used at runtime).
 - Anyone can submit a tournament at `/submeter`. Submissions land in a
   **pending** queue — they do not appear on the site until an admin approves
   them.
-- The admin logs in at `/admin/login` and sees two lists at `/admin`:
-  **Pendentes** (new submissions, with approve/reject/edit actions) and
+- The admin logs in at `/admin/login` and sees three lists at `/admin`:
+  **Pendentes** (new submissions, with approve/reject/edit actions),
+  **Correcoes pendentes** (visitors' corrections, see below) and
   **Todos os torneios** (every tournament regardless of status, with
   edit/delete). Approving a pending submission is what makes it public;
   rejecting or deleting does not. Admins can also add a tournament directly
   (skipping the pending queue) via **+ Novo torneio** at
-  `/admin/tournaments/new`.
+  `/admin/tournaments/new`. If a tournament was saved from another window
+  after its edit page was opened, saving that page reloads it with the
+  current values instead of writing the older ones back.
 - Public pages: `/` (all districts) and `/distrito/{slug}` (one district)
   each have a search box (`?q=`) matching title, location, organizer,
   district, or time control. `/torneios/{id}` shows a single tournament's
   detail (no search), and `/calendario` shows a 12-month calendar grid,
   optionally filtered with `?distrito=`. `.ics` calendar export is
   available per-tournament and combined at `/calendario.ics`.
+- Anyone can suggest a correction or leave a note from a tournament's page
+  (**Corrigir ou acrescentar informacao**, `/torneios/{id}/corrigir`). Each
+  field shows what the site says now and opens for editing when tapped;
+  only fields that actually differ are stored, along with an optional
+  note, a "cancelled or postponed" box and a source link. A suggestion
+  never changes the tournament by itself: it waits under **Correcoes
+  pendentes** in `/admin`. **rever** opens the normal edit form with the
+  suggested values filled in, the changed fields highlighted and the live
+  value under each, so saving applies whatever is left in the form and
+  closes the correction. **rejeitar** on the dashboard, and **Rejeitar
+  sugestao** or **Marcar como tratada sem guardar** on that review page,
+  close it without touching the tournament. Changes are measured against
+  what the visitor was shown, so an edit made while their form was open
+  is not taken as theirs; a field edited after the suggestion was made is
+  flagged in the review.
 - `/robots.txt`, `/sitemap.xml`, and `/healthz` (used by the Docker
   healthcheck) are served for crawlers and infra, not meant to be visited
   directly.
@@ -234,7 +252,8 @@ documented separately in [SCRAPING.md](SCRAPING.md).
 
 Tests spin up the FastAPI app against a throwaway SQLite file (via the
 `DATABASE_URL` env var) and cover the public pages, search, the submission
-form (including the honeypot), and the admin login/approve flow.
+form (including the honeypot), the admin login/approve flow, and visitor
+corrections from the public form through the admin review.
 
 ## Known limitations (MVP scope)
 

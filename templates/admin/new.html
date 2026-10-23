@@ -55,6 +55,7 @@
   <div class="field field-half">
     <label for="organizer">Organizacao</label>
     <input type="text" id="organizer" name="organizer" value="{{ values.organizer or '' }}">
+    {% if errors.organizer %}<p class="error">{{ errors.organizer }}</p>{% endif %}
   </div>
 
   <div class="field field-half">
@@ -84,6 +85,7 @@
   <div class="field">
     <label for="description">Descricao</label>
     <textarea id="description" name="description" rows="4">{{ values.description or '' }}</textarea>
+    {% if errors.description %}<p class="error">{{ errors.description }}</p>{% endif %}
   </div>
 
   <div class="field">

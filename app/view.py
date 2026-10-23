@@ -1,10 +1,12 @@
 import calendar as _calendar
+import hashlib
+import json
 import re
 from datetime import date
 
 from markupsafe import Markup, escape
 
-from .models import Tournament
+from .models import Correction, CorrectionStatus, Tournament
 from .utils import deaccent, slugify
 
 MONTH_NAMES_PT = [
@@ -217,3 +219,145 @@ def edit_values(t: Tournament) -> dict:
         "submitted_by_name": t.submitted_by_name,
         "submitted_by_email": t.submitted_by_email,
     }
+
+
+# --- Corrections suggested by visitors -------------------------------------
+
+# Every field a visitor can correct, in form order, with the label the public
+# form uses for it.
+FIELD_LABELS = {
+    "title": "Nome do torneio",
+    "district": "Distrito",
+    "date": "Data",
+    "location": "Local",
+    "time_control": "Ritmo de jogo",
+    "organizer": "Organizacao",
+    "chess_results_url": "Link chess-results.com",
+    "regulation_url": "Link do regulamento",
+    "registration_url": "Link de inscricao",
+    "link": "Site do torneio",
+    "description": "Descricao",
+}
+MULTILINE_FIELDS = {"description"}
+
+
+def normalize_value(value) -> str:
+    """A stored or submitted value in one comparable shape. Browsers send
+    textarea line breaks as CRLF and surrounding whitespace never matters, so
+    neither may register as a correction the visitor did not make."""
+    if value is None:
+        return ""
+    if isinstance(value, date):
+        return value.isoformat()
+    return str(value).replace("\r\n", "\n").replace("\r", "\n").strip()
+
+
+def normalize_field(name: str, value) -> str:
+    """normalize_value for a tournament field. Browsers drop line breaks from
+    single-line inputs, so a stored value containing one (an imported venue,
+    say) would otherwise always look edited."""
+    value = normalize_value(value)
+    if name not in MULTILINE_FIELDS:
+        value = value.replace("\n", "").strip()
+    return value
+
+
+def display_value(field: str, value: str, limit: int | None = None) -> str:
+    if not value:
+        return "-"
+    if field == "date":
+        try:
+            return date.fromisoformat(value).strftime("%d/%m/%Y")
+        except ValueError:
+            return value
+    if limit and len(value) > limit:
+        return value[:limit].rstrip() + "..."
+    return value
+
+
+def _diff_window(old: str, new: str, limit: int) -> tuple[str, str]:
+    """Both values cut to the same window around their first difference, so
+    a fix near the end of a long text is what shows."""
+    if len(old) <= limit and len(new) <= limit:
+        return old, new
+    first = next((i for i, (a, b) in enumerate(zip(old, new)) if a != b), min(len(old), len(new)))
+    start = max(0, first - limit // 3)
+
+    def cut(value: str) -> str:
+        piece = value[start:start + limit]
+        return ("..." if start else "") + piece + ("..." if start + limit < len(value) else "")
+
+    return cut(old), cut(new)
+
+
+def correction_form_fields(t: Tournament, values: dict, errors: dict, seen: dict | None = None) -> list[dict]:
+    """One row per correctable field for the public form. `seen` is what the
+    visitor was shown (posted back with the form); it defaults to the
+    tournament now. A row starts open when the visitor already changed it or
+    it has an error, so a form shown again after a mistake keeps it in view."""
+    current = edit_values(t)
+    seen = seen or {}
+    rows = []
+    for name, label in FIELD_LABELS.items():
+        base = seen.get(name)
+        if base is None:
+            base = current[name]
+        value = values.get(name, base)
+        changed = normalize_field(name, value) != normalize_field(name, base)
+        rows.append({
+            "name": name,
+            "label": label,
+            "value": value,
+            "seen": base,
+            "display": display_value(name, normalize_field(name, base), limit=120),
+            "changed": changed,
+            "open": changed or name in errors,
+        })
+    return rows
+
+
+def correction_changes(c: Correction, t: Tournament) -> list[dict]:
+    """The visitor's changes in form order, each with the tournament's value
+    now. A change is stale when the tournament no longer has the value the
+    visitor saw, i.e. someone edited it after the suggestion was made."""
+    current = edit_values(t)
+    out = []
+    for name, label in FIELD_LABELS.items():
+        change = (c.changes or {}).get(name)
+        if not change:
+            continue
+        old, new = change.get("old", ""), change.get("new", "")
+        now = normalize_field(name, current[name])
+        old_window, new_window = _diff_window(old, new, 80)
+        out.append({
+            "name": name,
+            "label": label,
+            "old": old,
+            "new": new,
+            "old_display": display_value(name, old_window),
+            "new_display": display_value(name, new_window),
+            "current_display": display_value(name, now),
+            "whitespace_only": old != new and old.split() == new.split(),
+            "stale": now != old,
+        })
+    return out
+
+
+def review_values(t: Tournament, c: Correction) -> dict:
+    """Values for the admin edit form when reviewing a correction: the
+    tournament as it is now, with a pending suggestion's values on top."""
+    values = edit_values(t)
+    if c.status == CorrectionStatus.pending:
+        for name, change in (c.changes or {}).items():
+            if name in FIELD_LABELS:
+                values[name] = change.get("new", "")
+    return values
+
+
+def edit_version(t: Tournament) -> str:
+    """Fingerprint of the tournament as the edit form loads it. The form
+    posts it back, so saving a page opened before another save (a second
+    tab, another correction applied meanwhile) is caught instead of quietly
+    writing the older values over the newer ones."""
+    snapshot = json.dumps(edit_values(t), sort_keys=True, default=str)
+    return hashlib.sha256(snapshot.encode()).hexdigest()[:16]

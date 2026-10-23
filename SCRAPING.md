@@ -149,7 +149,10 @@ Time controls live in the regulation PDFs. Extract with `pdftotext -layout`.
 
 ### FIDE — registrations, earlier than anywhere else
 
-- `https://ratings.fide.com/a_tournaments.php?country=POR`
+- `https://ratings.fide.com/a_tournaments.php?country=POR` — since October
+  2026 this returns an **empty body** unless the request carries
+  `X-Requested-With: XMLHttpRequest`; with it, it returns JSON
+  (`{"data": [[id, name, city, system, start, end, …], …]}`).
 - `https://ratings.fide.com/tournament_information.phtml?event=<N>` — parse
   the `<tr>` pairs for name, city, dates, system, time control, arbiter.
 
@@ -160,6 +163,35 @@ you find things early. Not automated: the yield is low and needs judgement.
 one.** When FIDE disagrees with chess-results or a regulation, FIDE is usually
 wrong. Cities are sometimes placeholders too — the European championships in
 Portimão were listed as "Lisbon".
+
+### FPX club platform — open-tournament list, iCal feed, regulations
+
+Found 2026-10-17. Most of `clubes.fpx.pt` sits behind a club login, but three
+parts are public and carried tournaments that no other source had yet:
+
+- **Open-tournament list:** `https://clubes.fpx.pt/listagens/lista_torneios_busca.php`,
+  the FPX's homologated opens with dates, rhythm, organizer, chess-results and
+  regulation links. The HTML never closes its `<tr>`/`<td>` tags, so split on
+  `<tr class=linfil>`.
+- **iCal feed:** `http://clubes.fpx.pt/fpxcalendario_ics/<oficiais>:<outras>:<flags>`,
+  built by the form at `https://clubes.fpx.pt/fpxcalendario`. Each list is
+  two-digit region codes from `00` (Nacionais) to `21` (Internacionais); the
+  flags `J`, `V`, `F` add youth, veteran and women's events. Everything is
+  `000102…21:000102…21:FVJ`. Events are timed rather than all-day, and the
+  description names the regulation. `parse_ical` reads it, so adding it is one
+  line in `SOURCES`.
+- **Regulations:** `/provas/regulamentos/<DIST>_<season end>_<code>.pdf` for
+  association championships (`POR_2027_CDSR` is AX Porto's 2026/27
+  semi-rápidas) and `/provas/homologadas/<file>.pdf` for opens. Links can be
+  mistyped: the list pointed at `ALG_2007_CDSR.pdf`, the file is
+  `ALG_2027_CDSR.pdf`. Its chess-results links can be wrong too: Lagoa's
+  "Dia Mundial do Xadrez" pointed at `tnr1496708`, a GXP circuit event
+  (2026-10-23). Check the title on the page you land on.
+
+The 2026-10-17 run found the Philanderkas (Chaves) and Cucujães opens, the
+Setúbal and Algarve semi-rápidas championships, and the remaining dates of the
+GXP Campeãs Mundiais circuit here. The first four were also on FIDE; none were
+on chess-results yet.
 
 ## Coverage
 
@@ -269,23 +301,26 @@ offering both.
 
 ## Dead ends
 
-Checked October 2026, nothing current. Skip unless you have reason to think
-they changed.
+Checked October 2026, nothing current; rows with a date were re-checked that
+day. Skip unless you have reason to think they changed.
 
 | Source | State |
 | --- | --- |
-| chessmanager.com | DNS failed |
-| tornelo.com, chess.com/events, lichess broadcasts | nothing for Portugal OTB |
-| chess-calendar.eu | nothing beyond chess-results |
-| clubes.fpx.pt | 403 / password-protected |
-| axaveiro.pt | "em construção" |
-| xadrez64.com | expired certificate |
-| axbraga.weebly.com | last updated 2018 |
-| axporto.weebly.com | calendar stops at 2024/25 |
-| gxp.pt | returns no usable content |
-| ACXA (Algarve), AXRAM (Madeira), AXRAA (Açores) | no 2026/27 calendar online |
+| chessmanager.com | tournament search still returns 403 to scripts (2026-10-23) |
+| tornelo.com, chess.com/events, lichess broadcasts | nothing for Portugal OTB; tornelo now returns 200 but is a JavaScript shell with no listings (2026-10-23) |
+| chess-calendar.eu | now returns 200, but only re-lists chess-results and FIDE (2026-10-23) |
+| clubes.fpx.pt | login-only, **except** the open-tournament list and iCal feed (see Sources, 2026-10-17) |
+| axaveiro.pt | now times out (2026-10-23) |
+| xadrez64.com | connection times out (2026-10-23) |
+| axbraga.weebly.com | last updated 2018 (2026-10-23) |
+| axporto.weebly.com | calendar stops at 2024/25 (2026-10-23); AXP's 2026/27 regulations are on clubes.fpx.pt |
+| gxp.pt | no usable content without a browser (2026-10-23); the GXP circuit regulation is on clubes.fpx.pt |
+| lecachessopen.com, espacomusas.pt, art-telheiras.pt, axsetubal.pt | no Events Calendar iCal feed, 404 (2026-10-23) |
+| academiaxadrezmaia.pt, gdblxadrez.pt, maiachessopen.com | domains do not resolve (2026-10-23); the Academia de Xadrez da Maia posts its regulations on chess-results |
+| Web search (postal.pt, viralagenda.com, montepio.org) | only past editions — Circuito Xadrez no Museu, Lagoa's Ibn Ammar circuit, Maia Blitz Cup; Montepio's rápidas are for members (2026-10-23) |
+| ACXA (Algarve), AXRAM (Madeira), AXRAA (Açores) | no 2026/27 calendar online; ACXA's championship regulation is on clubes.fpx.pt |
 | AXDC, Leiria, Guarda, Castelo Branco, Santarém | no calendar online |
-| Municipal agendas, juntas de freguesia, local press | almost nothing; not worth a sweep |
+| Municipal agendas, juntas de freguesia, local press | almost nothing; not worth a sweep. Matosinhos' sports agenda did list the GD Basquete de Leça open (2026-10-17) |
 
 The AX Setúbal 2026/27 calendar PDF exists but its table is misaligned
 (17 events against 14 dates) — don't trust rows read out of it without

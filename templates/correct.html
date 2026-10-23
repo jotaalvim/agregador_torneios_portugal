@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Corrigir: {{ t.title }} | Torneios Xadrez Portugal{% endblock %}
+{# A form, not content: keep it out of search results. #}
+{% block head_extra %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+<div class="narrow">
+<a class="back-link" href="/torneios/{{ t.id }}">&larr; Voltar ao torneio</a>
+<h1>Corrigir ou acrescentar informacao</h1>
+<p class="fix-subject">{{ t.title }}</p>
+<p class="notice">Carrega em <strong>corrigir</strong> na linha que esta errada, ou deixa so uma nota. As correcoes sao revistas por um administrador antes de aparecerem no site.</p>
+{% if errors.general %}<p class="error" role="alert">{{ errors.general }}</p>{% endif %}
+
+<form method="post" action="/torneios/{{ t.id }}/corrigir" class="form" novalidate>
+  <div class="honeypot" aria-hidden="true">
+    <label for="confirmacao">Nao preencher</label>
+    <input type="text" id="confirmacao" name="confirmacao" tabindex="-1" autocomplete="off">
+  </div>
+
+  {# Every field is always sent, along with the value the visitor was shown
+     (seen_<field>); the server keeps only the fields that differ from it.
+     A row closed after editing still counts, so the script below marks it. #}
+  <div class="fix-rows">
+    {% for f in fields %}
+    <details class="fix-row{% if f.changed %} is-changed{% endif %}"{% if f.open %} open{% endif %}>
+      <summary>
+        <span class="fix-label">{{ f.label }}</span>
+        <span class="fix-current">{{ f.display }}</span>
+        <span class="fix-toggle">corrigir</span>
+      </summary>
+      <div class="field">
+        <input type="hidden" name="seen_{{ f.name }}" value="{{ f.seen }}">
+        <label for="{{ f.name }}">{{ f.label }}: valor correto</label>
+        {% if f.name == "description" %}
+        <textarea id="description" name="description" rows="4">{{ f.value }}</textarea>
+        {% elif f.name == "date" %}
+        <input type="date" id="date" name="date" value="{{ f.value }}">
+        {% elif f.name == "district" %}
+        <input type="text" id="district" name="district" list="district-options" value="{{ f.value }}">
+        <datalist id="district-options">
+          {% for d in districts %}<option value="{{ d.name }}">{% endfor %}
+        </datalist>
+        {% elif f.name.endswith("_url") or f.name == "link" %}
+        <input type="url" id="{{ f.name }}" name="{{ f.name }}" placeholder="https://..." value="{{ f.value }}">
+        {% else %}
+        <input type="text" id="{{ f.name }}" name="{{ f.name }}" value="{{ f.value }}">
+        {% endif %}
+        {% if errors[f.name] %}<p class="error">{{ errors[f.name] }}</p>{% endif %}
+      </div>
+    </details>
+    {% endfor %}
+  </div>
+
+  <div class="field field-check">
+    <label><input type="checkbox" name="cancelled" value="1"{% if values.cancelled %} checked{% endif %}> O torneio foi cancelado ou adiado</label>
+  </div>
+
+  <div class="field">
+    <label for="note">Nota</label>
+    <textarea id="note" name="note" rows="3" placeholder="ex: as inscricoes ja esgotaram; a primeira ronda passou para as 15h">{{ values.note or '' }}</textarea>
+    <p class="hint">So o administrador ve a nota. Obrigatoria se nao corrigires nenhuma linha acima.</p>
+    {% if errors.note %}<p class="error">{{ errors.note }}</p>{% endif %}
+  </div>
+
+  <div class="field">
+    <label for="source_url">Fonte, se tiveres</label>
+    <input type="url" id="source_url" name="source_url" placeholder="https://... regulamento, chess-results, pagina do clube" value="{{ values.source_url or '' }}">
+    {% if errors.source_url %}<p class="error">{{ errors.source_url }}</p>{% endif %}
+  </div>
+
+  <fieldset>
+    <legend>Os teus dados (opcional, para o admin poder contactar-te em caso de duvidas)</legend>
+    <div class="field">
+      <label for="submitted_by_name">O teu nome</label>
+      <input type="text" id="submitted_by_name" name="submitted_by_name" value="{{ values.submitted_by_name or '' }}">
+      {% if errors.submitted_by_name %}<p class="error">{{ errors.submitted_by_name }}</p>{% endif %}
+    </div>
+    <div class="field">
+      <label for="submitted_by_email">O teu email</label>
+      <input type="email" id="submitted_by_email" name="submitted_by_email" value="{{ values.submitted_by_email or '' }}">
+      {% if errors.submitted_by_email %}<p class="error">{{ errors.submitted_by_email }}</p>{% endif %}
+    </div>
+  </fieldset>
+
+  <button type="submit">Enviar correcao</button>
+</form>
+</div>
+<script>
+  // Mark a row "alterado" as soon as its value differs from what the visitor
+  // was shown, so closing the row cannot hide an edit that will be sent.
+  // Same comparison as the server: line breaks as LF, ends trimmed, and no
+  // line breaks at all in single-line fields (browsers drop them there).
+  (function () {
+    function norm(value, multiline) {
+      value = (value || "").replace(/\r\n?/g, "\n");
+      if (!multiline) value = value.replace(/\n/g, "");
+      return value.trim();
+    }
+    document.querySelectorAll(".fix-row").forEach(function (row) {
+      var seen = row.querySelector('input[type="hidden"]');
+      var input = row.querySelector('input:not([type="hidden"]), textarea');
+      if (!seen || !input) return;
+      var multiline = input.tagName === "TEXTAREA";
+      function update() {
+        row.classList.toggle("is-changed", norm(input.value, multiline) !== norm(seen.value, multiline));
+      }
+      input.addEventListener("input", update);
+      input.addEventListener("change", update);
+    });
+  })();
+</script>
+{% endblock %}

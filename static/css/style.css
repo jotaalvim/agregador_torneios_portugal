@@ -663,6 +663,8 @@ dl.meta dd.tc { font-family: var(--display); font-size: 1.15rem; font-weight: 60
 .field:has(.error) :is(input, textarea, select) { border-color: var(--danger); }
 .error { margin: .35rem 0 0; color: var(--danger); font-size: .85rem; font-weight: 500; }
 .form > .error { margin: 0 0 1rem; }
+/* A form-wide message above the form (the field errors sit further down). */
+.narrow > .error { margin: 0 0 1rem; }
 .honeypot { display: none; }
 /* Two explicit columns: auto-fit would open a third, empty one beside the
    name and email, since the full-width legend keeps it from collapsing. */
@@ -688,6 +690,35 @@ legend {
   font-size: .9rem;
 }
 .form button[type="submit"] { justify-self: start; padding: .7rem 1.4rem; }
+
+/* Correction form: one row per field showing what the site says now, closed
+   until the visitor opens the one that is wrong. */
+.fix-subject { margin: -.4rem 0 1rem; color: var(--muted); font-size: 1.05rem; }
+.fix-rows { margin: 0 0 1.5rem; border-top: 2px solid var(--rule); }
+.fix-row { border-bottom: 1px solid var(--line); }
+.fix-row > summary {
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr) auto;
+  gap: .2rem 1rem;
+  align-items: baseline;
+  padding: .7rem 0;
+  cursor: pointer;
+  list-style: none;
+}
+.fix-row > summary::-webkit-details-marker { display: none; }
+.fix-row > summary:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.fix-label { font-size: .9rem; font-weight: 600; }
+.fix-current { color: var(--muted); overflow-wrap: anywhere; }
+.fix-toggle { color: var(--link); font-size: .9rem; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.fix-row > summary:hover .fix-toggle { text-decoration-thickness: 2px; }
+.fix-row[open] > summary .fix-toggle { color: var(--muted); }
+.fix-row.is-changed > summary .fix-label::after { content: " \2022  alterado"; color: var(--warning-ink); }
+.fix-row > .field { margin: 0 0 1rem; }
+.field-check label { display: flex; gap: .6rem; align-items: center; margin: 0; font-size: 1rem; }
+/* outline-offset beats the -1px of the .field focus rule, which would hide
+   the ring inside a checked box. */
+.field-check input[type="checkbox"] { width: 1.15rem; height: 1.15rem; min-height: 0; margin: 0; padding: 0; outline-offset: 2px; accent-color: var(--btn); }
+.hint { margin: .35rem 0 0; color: var(--muted); font-size: .85rem; }
 
 /* ==========================================================================
    Admin
@@ -749,6 +780,25 @@ button.link-btn.reject { color: var(--danger); }
 .status-pending { background: var(--warning-bg); color: var(--warning-ink); }
 .status-approved { background: var(--success-bg); color: var(--success); }
 .status-rejected { background: var(--danger-bg); color: var(--danger); }
+
+/* A visitor's correction: on the dashboard, and around the edit form when
+   reviewing one. */
+.change-list { margin: 0; padding: 0; list-style: none; }
+.change-list li + li { margin-top: .2rem; }
+.change-list del { color: var(--muted); }
+.change-list ins { font-weight: 600; text-decoration: none; }
+.change-list del, .change-list ins { white-space: pre-line; }
+.muted-note { color: var(--muted); font-size: .85rem; }
+.change-note { margin: .3rem 0 0; white-space: pre-line; }
+.change-flag { margin: 0 0 .3rem; color: var(--danger); font-weight: 600; }
+.stale { color: var(--warning-ink); font-weight: 600; }
+.correction-box { margin: 0 0 1.5rem; padding: .8rem 1rem; border-left: 3px solid var(--warning-ink); background: var(--warning-bg); }
+.correction-box p { margin: 0 0 .5rem; }
+.correction-box p:last-child { margin-bottom: 0; }
+.field.is-changed :is(input, textarea, select) { border-color: var(--warning-ink); box-shadow: inset 3px 0 0 var(--warning-ink); }
+.was { margin: .35rem 0 0; color: var(--muted); font-size: .85rem; overflow-wrap: anywhere; white-space: pre-line; }
+.was.stale { color: var(--warning-ink); }
+.correction-actions { display: flex; flex-wrap: wrap; gap: 1.4rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--line); }
 
 /* ==========================================================================
    Footer
@@ -1027,6 +1077,10 @@ button.link-btn.reject { color: var(--danger); }
 
   .form, fieldset { grid-template-columns: 1fr; }
   .form > .field-half { grid-column: 1 / -1; }
+
+  /* Label and "corrigir" on one line, the current value under them. */
+  .fix-row > summary { grid-template-columns: minmax(0, 1fr) auto; }
+  .fix-current { grid-column: 1 / -1; grid-row: 2; }
 }
 
 @media (max-width: 560px) {

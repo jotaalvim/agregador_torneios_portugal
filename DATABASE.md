@@ -77,13 +77,21 @@ UPDATE tournaments SET location = 'Pavilhão Municipal' WHERE id = 3;
 SELECT id, title, submitted_by_name, submitted_by_email
 FROM tournaments WHERE status = 'pending';
 
--- apagar um torneio (cuidado, isto não tem "undo")
+-- apagar um torneio (cuidado, isto não tem "undo"); apaga primeiro as
+-- correções dele, que o painel apagaria sozinho
+DELETE FROM corrections WHERE tournament_id = 7;
 DELETE FROM tournaments WHERE id = 7;
 ```
 
 Notas importantes:
-- `status` só aceita os valores `pending`, `approved` ou `rejected` (texto,
-  minúsculas) — outro valor qualquer parte a app ao carregar essa linha.
+- Nos torneios, `status` só aceita os valores `pending`, `approved` ou
+  `rejected` (texto, minúsculas) — outro valor qualquer parte a app ao
+  carregar essa linha.
+- As correções sugeridas pelos visitantes ficam na tabela `corrections`,
+  ligadas ao torneio por `tournament_id`. O `status` delas só aceita
+  `pending`, `resolved` ou `rejected`, e `changes` guarda em JSON só os
+  campos alterados, com o valor que o visitante viu e o sugerido. A tabela
+  é criada sozinha no arranque da app, sem migração.
 - `date` tem de estar em formato `YYYY-MM-DD`.
 - Se editares com a app a correr ao mesmo tempo, faz as alterações e sai da
   consola rapidamente — em WAL, escritas longas/abertas podem bloquear a
@@ -103,6 +111,10 @@ WHERE district = 'Braga' ORDER BY date DESC;
 
 -- quando é que algo foi submetido
 SELECT id, title, created_at FROM tournaments ORDER BY created_at DESC LIMIT 10;
+
+-- correções de visitantes ainda por rever
+SELECT id, tournament_id, changes, note, created_at
+FROM corrections WHERE status = 'pending' ORDER BY created_at;
 ```
 
 Se algo parecer "não guardado" depois de mexeres via `sqlite3` com a app a

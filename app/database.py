@@ -1,3 +1,4 @@
+import json
 import os
 
 from sqlalchemy import create_engine, event, inspect, text
@@ -7,7 +8,13 @@ from .config import DATA_DIR, DATABASE_URL
 
 os.makedirs(DATA_DIR, exist_ok=True)
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+# ensure_ascii=False keeps accented text readable in JSON columns when
+# someone opens them with sqlite3: "Pavilhão", not "Pavilh\u00e3o".
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    json_serializer=lambda value: json.dumps(value, ensure_ascii=False),
+)
 
 
 @event.listens_for(engine, "connect")
