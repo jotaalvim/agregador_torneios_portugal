@@ -467,6 +467,8 @@ button.link-btn:hover { text-decoration-color: currentColor; text-decoration-thi
 .search-clear { align-self: center; margin-left: 1rem; font-size: .92rem; white-space: nowrap; }
 
 .filters { position: relative; display: flex; flex-wrap: wrap; gap: .1rem 1.2rem; margin: 0 0 1.4rem; }
+/* The ritmo row sits right under the district one: one block of filters. */
+.filters:has(+ .filters) { margin-bottom: .35rem; }
 .filter {
   display: inline-flex;
   align-items: center;
@@ -480,10 +482,7 @@ button.link-btn:hover { text-decoration-color: currentColor; text-decoration-thi
 }
 .filter:hover { border-bottom-color: var(--line); }
 .filter.is-active { border-bottom-color: var(--fg); font-weight: 700; }
-/* The ritmo filter sits right under the district one, so the two read as one
-   block. Each group shows its usual ritmo, set like the ritmo column: on its
-   own "Rapidas" is easy to take for rapid when it means blitz. */
-.filters:has(+ .filters) { margin-bottom: .35rem; }
+/* A ritmo's usual time control, set like the ritmo column in the list. */
 .filter-hint { color: var(--muted); font-family: var(--display); font-size: 1.05rem; font-weight: 600; }
 
 /* Legend swatch, also used in the tournament list so a row and its day in the
@@ -1062,29 +1061,20 @@ button.link-btn.reject { color: var(--danger); }
   .brand-name { padding-left: .65rem; }
   .nav-cta { margin-left: 0; padding: .45rem .75rem; }
 
-  /* One row of filters that scrolls sideways instead of wrapping into
-     several, bled to the screen edges. */
-  .filters {
+  .filters { margin-bottom: 1.25rem; }
+  /* The districts are one row that scrolls sideways instead of wrapping into
+     several, bled to the screen edges. The four ritmos still wrap: scrolled,
+     the last of them would start off screen. */
+  .filters-districts {
     flex-wrap: nowrap;
     overflow-x: auto;
     margin-inline: calc(-1 * var(--gutter));
-    margin-bottom: 1.25rem;
     padding-inline: var(--gutter);
     scrollbar-width: none;
     -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent);
     mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent);
   }
-  .filters::-webkit-scrollbar { display: none; }
-  /* Except the ritmo one: its four chips wrap onto a second line, where
-     scrolling would start the last of them off the edge of the screen. */
-  .filters-ritmo {
-    flex-wrap: wrap;
-    overflow-x: visible;
-    margin-inline: 0;
-    padding-inline: 0;
-    -webkit-mask-image: none;
-    mask-image: none;
-  }
+  .filters-districts::-webkit-scrollbar { display: none; }
 
   dl.meta { grid-template-columns: 1fr; }
   dl.meta dt { padding-bottom: 0; border-bottom: 0; }

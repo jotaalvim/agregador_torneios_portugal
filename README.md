@@ -37,13 +37,13 @@ kept for reference — it is not used at runtime).
   optionally filtered with `?distrito=`. `.ics` calendar export is
   available per-tournament and combined at `/calendario.ics`.
 - The lists, the calendar and `/calendario.ics` also filter by ritmo with
-  `?ritmo=`: `rapidas` (blitz), `semi-rapidas` (rapid) or `classicas`. The
-  group comes from the time control text, by FIDE's limits: base +
-  increment up to 10 minutes is blitz, under 60 rapid, anything longer
-  classical (`time_control_category` in `app/view.py`). A time control
-  with no minutes in it to read only shows with no ritmo picked. The ritmo
-  stays when you switch district, view or search, and an unknown value
-  shows everything.
+  `?ritmo=`: `classicas`, `semi-rapidas` (rapid) or `rapidas` (blitz). The
+  group comes from the first `X + Y` in the time control, by FIDE's limits:
+  base + increment up to 10 minutes is blitz, under 60 rapid, anything
+  longer classical (`ritmo_of` in `app/view.py`). A time control without
+  one, like `a definir`, only shows with no ritmo picked. The ritmo stays
+  when you switch district, view or search, and an unknown value shows
+  everything.
 - Anyone can suggest a correction or leave a note from a tournament's page
   (**Corrigir ou acrescentar informacao**, `/torneios/{id}/corrigir`). Each
   field shows what the site says now and opens for editing when tapped;
@@ -62,6 +62,8 @@ kept for reference — it is not used at runtime).
 - `/robots.txt`, `/sitemap.xml`, and `/healthz` (used by the Docker
   healthcheck) are served for crawlers and infra, not meant to be visited
   directly.
+- A missing page (an old link to a tournament since removed, a mistyped
+  district) gets a 404 page in the site's layout, not FastAPI's JSON.
 
 ## Security notes
 
@@ -71,7 +73,14 @@ kept for reference — it is not used at runtime).
   or `https://`.
 - Admin login is rate-limited to 5 attempts per 15 minutes per IP
   (in-memory, resets on restart — fine for the single-process deployment
-  this is built for).
+  this is built for). Behind Caddy, "per IP" depends on
+  `FORWARDED_ALLOW_IPS` in `docker-compose.yml`: without it every request
+  looks like it came from Caddy, so five failed logins from anyone lock
+  everyone out, and the app builds its URLs (canonical, sitemap, share
+  links) as `http://`. It trusts only Docker's private ranges, not `*`:
+  with `*`, uvicorn believes whatever `X-Forwarded-For` a client sends.
+- In Docker, the app's port 8000 is published on `127.0.0.1` only, so the
+  public way in is Caddy, over HTTPS.
 - All admin POST actions (create/approve/reject/edit/delete/logout) are
   protected by a per-session CSRF token.
 

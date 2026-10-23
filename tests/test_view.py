@@ -1,6 +1,6 @@
 import pytest
 
-from app.view import time_control_category, time_control_display, time_control_html, time_control_slug
+from app.view import Filters, ritmo_of, time_control_display, time_control_html
 
 
 @pytest.mark.parametrize(
@@ -28,16 +28,17 @@ def test_time_control_html_escapes_typed_text():
     assert html == '&lt;b&gt;15<span class="tc-min">′</span> + 5″&lt;/b&gt;'
 
 
+
 @pytest.mark.parametrize(
-    ("typed", "category"),
+    ("time_control", "ritmo"),
     [
-        # Every ritmo on the site in October 2026, sorted by FIDE's limits:
+        # Every time control on the site in October 2026, by FIDE's limits:
         # base + increment up to 10 minutes is blitz, under 60 rapid.
         ("3 + 2", "rapidas"),
         ("3+2", "rapidas"),
-        ("5 + 3", "rapidas"),
         ("4 + 4", "rapidas"),
         ("5 + 0", "rapidas"),
+        ("5 + 3", "rapidas"),
         ("5 + 5", "rapidas"),
         ("10 + 0", "rapidas"),
         ("10 + 2", "semi-rapidas"),
@@ -49,25 +50,24 @@ def test_time_control_html_escapes_typed_text():
         ("60 + 30", "classicas"),
         ("90 + 30", "classicas"),
         ("90/40 + 30 + 30", "classicas"),
-        # Typed by organizers, as the seed tournaments were.
+        # As organizers type them.
         ("90' + 30''/lance, 9 rondas", "classicas"),
-        ("15' + 5''/lance, 7 rondas", "semi-rapidas"),
-        ("3’ + 2’’", "rapidas"),
+        ("15’ + 5’’", "semi-rapidas"),
+        ("90 min + 30 s", "classicas"),
         ("11 rondas, 3+2", "rapidas"),
-        ("10 minutos/jogador + 5 segundos/lance", "semi-rapidas"),
-        ("1h + 30s", "classicas"),
-        ("1h30 + 30", "classicas"),
-        ("Partidas de 45 minutos", "semi-rapidas"),
-        # No time in it: shown only with no ritmo picked.
+        # No base + increment to read: shown only with no ritmo picked.
         ("a definir", None),
-        ("9 rondas", None),
+        ("2h + 30s", None),
     ],
 )
-def test_time_control_category(typed, category):
-    assert time_control_category(typed) == category
+def test_ritmo_of(time_control, ritmo):
+    assert ritmo_of(time_control) == ritmo
 
 
-def test_time_control_slug_ignores_unknown_values():
-    assert time_control_slug("Clássicas") == "classicas"
-    assert time_control_slug("blitz") == ""
-    assert time_control_slug("") == ""
+def test_filters_url_changes_one_filter_and_keeps_the_rest():
+    f = Filters(district="braga", ritmo="classicas", q="open")
+    assert f.url(ritmo="rapidas") == "/distrito/braga?q=open&ritmo=rapidas"
+    assert f.url(district="porto", q="") == "/distrito/porto?ritmo=classicas"
+    assert f.url(view="calendar") == "/calendario?distrito=braga&ritmo=classicas"
+    assert f.feed_url == "/calendario.ics?distrito=braga&ritmo=classicas"
+    assert Filters().url() == "/"

@@ -2,7 +2,9 @@ import calendar as _calendar
 import hashlib
 import json
 import re
+from dataclasses import dataclass, replace
 from datetime import date
+from urllib.parse import urlencode
 
 from markupsafe import Markup, escape
 
@@ -88,55 +90,34 @@ def time_control_html(text: str) -> Markup:
     return Markup(escaped.replace("′", '<span class="tc-min">′</span>'))
 
 
-# The ritmo filter: time controls grouped the way Portuguese chess names them,
-# slowest first as in SCRAPING.md's table. "Rapidas" is blitz, not rapid (the
-# trap that table warns about), so each chip also shows the usual ritmo of its
-# group (`hint`).
-TIME_CONTROLS = {
+# The ritmo filter's choices: time controls grouped the way Portuguese chess
+# names them, slowest first as in SCRAPING.md's table. "Rapidas" is blitz, not
+# rapid, so each chip also shows the usual time control of its group (`hint`).
+RITMOS = {
     "classicas": {"label": "Classicas", "hint": "90+30"},
     "semi-rapidas": {"label": "Semi-rapidas", "hint": "10+5"},
     "rapidas": {"label": "Rapidas", "hint": "3+2"},
 }
 
-_TC_HOURS = re.compile(r"(\d+)\s*h(?:oras?)?(?![a-z])\s*(\d{1,2})?")
-_TC_BASE_INCREMENT = re.compile(r"(\d+)(?:\s*/\s*\d+)?[^\d+]*\+\s*(\d+)")
-_TC_BASE_ONLY = re.compile(r"(\d+)\s*(?:['′’]|m(?:in\w*)?\b)")
+# The first base + increment in a time control: "90 + 30", or as organizers
+# type it, "90' + 30''/lance", "90 min + 30 s". A multi-period "90/40 + 30 + 30"
+# reads as 90 + 30, which still puts it among the classical ones.
+_BASE_PLUS_INCREMENT = re.compile(r"(\d+)\s*(?:['′’]|m\w*)?\s*(?:/\s*\d+)?\s*\+\s*(\d+)", re.IGNORECASE)
 
 
-def time_control_minutes(text: str) -> int | None:
-    """Minutes per player for a 60-move game, the base plus 60 times the
-    increment, which is what FIDE tells blitz, rapid and classical apart by.
-    Reads the first base + increment in the text, wherever it is ("90' +
-    30''/lance", "11 rondas, 3+2"), hours ("1h30 + 30") and a base on its own
-    ("15 min"). "90/40 + 30 + 30" reads as 90 + 30: short of the real total,
-    but its first period alone makes it classical. None with no time in it."""
-    s = _TC_HOURS.sub(lambda m: f"{int(m[1]) * 60 + int(m[2] or 0)} min", deaccent(text))
-    if m := _TC_BASE_INCREMENT.search(s):
-        return int(m[1]) + int(m[2])
-    if m := _TC_BASE_ONLY.search(s):
-        return int(m[1])
-    return None
-
-
-def time_control_category(text: str) -> str | None:
-    """The TIME_CONTROLS group of a ritmo, by FIDE's limits: blitz up to 10
-    minutes, rapid under 60, classical from 60. None when it has no time in
-    it; that tournament then only shows with no ritmo picked."""
-    minutes = time_control_minutes(text)
-    if minutes is None:
+def ritmo_of(time_control: str) -> str | None:
+    """The RITMOS key for a time control, by FIDE's limits on a 60-move game:
+    base + increment up to 10 minutes is blitz, under 60 rapid, the rest
+    classical. None when there is no base + increment to read."""
+    m = _BASE_PLUS_INCREMENT.search(time_control)
+    if m is None:
         return None
+    minutes = int(m[1]) + int(m[2])
     if minutes <= 10:
         return "rapidas"
     if minutes < 60:
         return "semi-rapidas"
     return "classicas"
-
-
-def time_control_slug(value: str) -> str:
-    """The TIME_CONTROLS key a ?ritmo= value names, or "" for none: an unknown
-    one shows every ritmo rather than an empty list."""
-    slug = slugify(value)
-    return slug if slug in TIME_CONTROLS else ""
 
 
 def share_text(t: Tournament, page_url: str | None = None) -> str:
@@ -195,11 +176,10 @@ def search_tournaments(tournaments: list[Tournament], q: str) -> list[Tournament
     return [t for t in tournaments if any(q in deaccent(getattr(t, f) or "") for f in fields)]
 
 
-def filter_time_control(tournaments: list[Tournament], ritmo: str) -> list[Tournament]:
-    """Only the tournaments in the `ritmo` group; all of them for no group."""
-    if ritmo not in TIME_CONTROLS:
+def filter_by_ritmo(tournaments: list[Tournament], ritmo: str) -> list[Tournament]:
+    if not ritmo:
         return tournaments
-    return [t for t in tournaments if time_control_category(t.time_control) == ritmo]
+    return [t for t in tournaments if ritmo_of(t.time_control) == ritmo]
 
 
 def split_upcoming_past(tournaments: list[Tournament], today: date) -> tuple[list[dict], list[dict]]:
@@ -253,6 +233,38 @@ def districts_nav(names: list[str]) -> list[dict]:
         {"name": n, "slug": slugify(n), "slot": district_slot(n)}
         for n in sorted(set(names))
     ]
+
+
+@dataclass(frozen=True)
+class Filters:
+    """What a list or calendar page is narrowed to: a district slug and a
+    RITMOS key, empty for all, plus the list's search. Every link that changes
+    the view or a filter is url() with that change, so it keeps the rest."""
+
+    view: str = "list"  # or "calendar"
+    district: str = ""
+    ritmo: str = ""
+    q: str = ""
+
+    def url(self, **changes: str) -> str:
+        f = replace(self, **changes)
+        if f.view == "calendar":
+            return _with_query("/calendario", distrito=f.district, ritmo=f.ritmo)
+        return _with_query(f"/distrito/{f.district}" if f.district else "/", q=f.q, ritmo=f.ritmo)
+
+    @property
+    def feed_url(self) -> str:
+        return _with_query("/calendario.ics", distrito=self.district, ritmo=self.ritmo)
+
+    @property
+    def of_ritmo(self) -> str:
+        """The ritmo as the empty-list messages put it, " de classicas", or ""."""
+        return f" de {RITMOS[self.ritmo]['label'].lower()}" if self.ritmo else ""
+
+
+def _with_query(path: str, **params: str) -> str:
+    query = urlencode({k: v for k, v in params.items() if v})
+    return f"{path}?{query}" if query else path
 
 
 def edit_values(t: Tournament) -> dict:

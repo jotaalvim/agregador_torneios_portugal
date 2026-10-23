@@ -14,13 +14,19 @@ services:
 
   web:
     build: .
-    # No ports published to the host: Caddy is the only public entry point
-    # and reaches this service over the internal compose network as
-    # "web:8000". Uncomment the line below only for direct local testing
-    # without Caddy in front (e.g. `docker compose up web`).
+    # Caddy is the only public entry point and reaches this service over the
+    # internal compose network as "web:8000". The port is published on
+    # 127.0.0.1 only, for direct local testing (http://localhost:8000): on all
+    # interfaces it served the whole site, admin login included, over plain
+    # HTTP on the server's public IP.
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     environment:
+      # Trust the X-Forwarded-* headers Caddy sets when they come from the
+      # private ranges Docker networks use. Otherwise every request looks
+      # like Caddy's own: the canonical, sitemap and share URLs come out as
+      # http://, and the login rate limit counts all visitors as one.
+      FORWARDED_ALLOW_IPS: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
       SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY in .env}

@@ -8,4 +8,9 @@ __pycache__/
 *.pyc
 .venv/
 .env
+# The database, and the write-ahead log SQLite keeps next to it while open.
 data/*.db
+data/*.db-wal
+data/*.db-shm
+
+.DS_Store

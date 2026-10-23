@@ -20,7 +20,7 @@
        Cache-Control on /static, so browsers may otherwise pair new HTML with
        a heuristically cached old stylesheet for hours. #}
     <link rel="preload" href="/static/fonts/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="/static/css/style.css?v=7">
+    <link rel="stylesheet" href="/static/css/style.css?v=8">
     {% if goatcounter_script_url and goatcounter_endpoint %}
     <script>window.goatcounter = {allow_local: true}</script>
     <script data-goatcounter="{{ goatcounter_endpoint }}" async src="{{ goatcounter_script_url }}"></script>
@@ -30,13 +30,6 @@
     <a class="skip-link" href="#conteudo">Saltar para o conteudo</a>
 
     {% set path = request.url.path %}
-    {# On a district's list or calendar, both views keep that district, so
-       these two links do the same job as the tabs on phones (_view_toggle.html).
-       They keep the ritmo too, on the pages that filter by it. #}
-    {% if path.startswith('/distrito/') %}{% set nav_slug = request.path_params.get('slug', '') %}
-    {% elif path == '/calendario' %}{% set nav_slug = request.query_params.get('distrito', '') %}
-    {% else %}{% set nav_slug = '' %}{% endif %}
-    {% set nav_ritmo = ritmo|default('') %}
     <header class="site-header">
       <div class="wrap site-header-inner">
         <a class="brand" href="/">
@@ -44,10 +37,11 @@
           <span class="brand-name">Torneios Xadrez<span class="brand-tail"> Portugal</span></span>
         </a>
         {# Districts are not in here: they are filters on the list and the
-           calendar (see _district_chips.html), not places to go. #}
+           calendar (see _filters.html), not places to go. These two links keep
+           the filters, doing the same job as the tabs on phones (_view_toggle.html). #}
         <nav class="site-nav" aria-label="Principal">
-          <a href="{{ query_url('/distrito/' ~ nav_slug if nav_slug else '/', ritmo=nav_ritmo) }}" class="nav-link{% if path == '/' or path.startswith('/distrito/') or path.startswith('/torneios/') %} is-active{% endif %}"{% if path == '/' or path.startswith('/distrito/') %} aria-current="page"{% endif %}>Torneios</a>
-          <a href="{{ query_url('/calendario', distrito=nav_slug, ritmo=nav_ritmo) }}" class="nav-link{% if path == '/calendario' %} is-active{% endif %}"{% if path == '/calendario' %} aria-current="page"{% endif %}>Calendario</a>
+          <a href="{{ filters.url(view='list') }}" class="nav-link{% if path == '/' or path.startswith('/distrito/') or path.startswith('/torneios/') %} is-active{% endif %}"{% if path == '/' or path.startswith('/distrito/') %} aria-current="page"{% endif %}>Torneios</a>
+          <a href="{{ filters.url(view='calendar') }}" class="nav-link{% if path == '/calendario' %} is-active{% endif %}"{% if path == '/calendario' %} aria-current="page"{% endif %}>Calendario</a>
           <a href="/submeter" class="nav-cta" aria-label="Adicionar torneio">+ Adicionar<span class="nav-cta-extra"> torneio</span></a>
         </nav>
       </div>
@@ -75,7 +69,7 @@
     <script>
       // On narrow screens the district filter is one row that scrolls
       // sideways; start it scrolled so the active district is in view.
-      document.querySelectorAll(".filters .is-active").forEach(function (el) {
+      document.querySelectorAll(".filters-districts .is-active").forEach(function (el) {
         var row = el.parentElement;
         if (row.scrollWidth > row.clientWidth) {
           row.scrollLeft = el.offsetLeft - (row.clientWidth - el.offsetWidth) / 2;

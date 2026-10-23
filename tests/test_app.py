@@ -54,9 +54,9 @@ def test_search_no_results_message(client):
 
 
 SEED_BY_RITMO = {
-    "rapidas": ["Blitz de Ano Novo de Viana do Castelo"],
-    "semi-rapidas": ["IV Semi-Rapidas de Guimaraes"],
     "classicas": ["II Open Internacional de Braga", "Open de Outono do Porto"],
+    "semi-rapidas": ["IV Semi-Rapidas de Guimaraes"],
+    "rapidas": ["Blitz de Ano Novo de Viana do Castelo"],
 }
 
 
@@ -80,30 +80,17 @@ def test_ritmo_filter_with_district_and_calendar(client):
     assert "IV Semi-Rapidas de Guimaraes" not in r.text
 
 
-def test_ritmo_filter_ignores_unknown_value(client):
+def test_unknown_ritmo_shows_everything(client):
     r = client.get("/", params={"ritmo": "bogus"})
-    assert r.status_code == 200
-    for titles in SEED_BY_RITMO.values():
-        for title in titles:
-            assert title in r.text
-    assert 'class="filter is-active" aria-current="page">Todos os ritmos' in r.text
+    assert all(title in r.text for titles in SEED_BY_RITMO.values() for title in titles)
 
 
-def test_ritmo_filter_is_kept_by_the_other_links(client):
-    r = client.get("/", params={"q": "Open", "ritmo": "classicas"})
-    assert 'href="/distrito/braga?ritmo=classicas"' in r.text
-    assert 'href="/calendario?ritmo=classicas"' in r.text
-    assert 'href="/calendario.ics?ritmo=classicas"' in r.text
+def test_ritmo_is_kept_by_links_and_search(client):
+    # How each link is built is tested on view.Filters; this checks the pages use it.
+    r = client.get("/distrito/braga", params={"ritmo": "classicas"})
+    assert 'href="/distrito/porto?ritmo=classicas"' in r.text
+    assert 'href="/calendario?distrito=braga&amp;ritmo=classicas"' in r.text
     assert '<input type="hidden" name="ritmo" value="classicas">' in r.text
-    assert 'class="search-clear" href="/?ritmo=classicas"' in r.text
-    # Switching ritmo keeps the search.
-    assert 'href="/?q=Open&amp;ritmo=rapidas"' in r.text
-    assert 'href="/?q=Open" class="filter">Todos os ritmos' in r.text
-
-    r = client.get("/calendario", params={"distrito": "braga", "ritmo": "classicas"})
-    assert 'href="/distrito/braga?ritmo=classicas"' in r.text
-    assert 'href="/calendario?distrito=porto&amp;ritmo=classicas"' in r.text
-    assert 'href="/calendario?distrito=braga&amp;ritmo=rapidas"' in r.text
 
 
 def test_ritmo_filter_no_results_message(client):
@@ -114,6 +101,15 @@ def test_ritmo_filter_no_results_message(client):
 def test_district_page_404_for_unknown_slug(client):
     r = client.get("/distrito/does-not-exist")
     assert r.status_code == 404
+
+
+@pytest.mark.parametrize("url", ["/torneios/999999", "/distrito/does-not-exist", "/pagina-que-nao-existe"])
+def test_missing_pages_get_the_site_layout(client, url):
+    r = client.get(url)
+    assert r.status_code == 404
+    assert r.headers["content-type"].startswith("text/html")
+    assert "Pagina nao encontrada" in r.text
+    assert 'href="/calendario"' in r.text  # the masthead, so there is a way on
 
 
 def test_admin_requires_login(client):

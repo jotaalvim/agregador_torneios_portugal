@@ -3,27 +3,25 @@
 {% block content %}
 <div class="page-head">
   <h1>Torneios</h1>
-  {% with view_mode = "list", slug = "" %}{% include "_view_toggle.html" %}{% endwith %}
+  {% include "_view_toggle.html" %}
 </div>
 
 <form class="search" method="get" action="/" role="search">
-  <input type="search" name="q" value="{{ q }}" placeholder="Pesquisar por nome, local ou clube&hellip;" aria-label="Pesquisar torneios">
-  {% if ritmo %}<input type="hidden" name="ritmo" value="{{ ritmo }}">{% endif %}
+  <input type="search" name="q" value="{{ filters.q }}" placeholder="Pesquisar por nome, local ou clube&hellip;" aria-label="Pesquisar torneios">
+  {% if filters.ritmo %}<input type="hidden" name="ritmo" value="{{ filters.ritmo }}">{% endif %}
   <button type="submit">Pesquisar</button>
-  {% if q %}<a class="search-clear" href="{{ query_url('/', ritmo=ritmo) }}">Limpar</a>{% endif %}
+  {% if filters.q %}<a class="search-clear" href="{{ filters.url(q='') }}">Limpar</a>{% endif %}
 </form>
 
-{% with chips_mode = "list", active_slug = "" %}{% include "_district_chips.html" %}{% include "_time_control_chips.html" %}{% endwith %}
+{% include "_filters.html" %}
 
-{# "de classicas " when a ritmo is picked, for the empty-list messages. #}
-{% set of_ritmo = "de " ~ time_controls[ritmo].label|lower ~ " " if ritmo else "" %}
 <h2 class="section-title">Proximos{% if upcoming %} <span class="count">({{ upcoming|length }})</span>{% endif %}</h2>
 {% if upcoming %}
 {% with rows = upcoming %}{% include "_tournament_list.html" %}{% endwith %}
-{% elif q %}
-<p class="empty">Sem torneios {{ of_ritmo }}proximos para &ldquo;{{ q }}&rdquo;.</p>
+{% elif filters.q %}
+<p class="empty">Sem torneios{{ filters.of_ritmo }} proximos para &ldquo;{{ filters.q }}&rdquo;.</p>
 {% else %}
-<p class="empty">Sem torneios {{ of_ritmo }}agendados.</p>
+<p class="empty">Sem torneios{{ filters.of_ritmo }} agendados.</p>
 {% endif %}
 
 {% if past %}
@@ -33,5 +31,5 @@
 </details>
 {% endif %}
 
-<p class="page-actions"><a href="{{ query_url('/calendario.ics', ritmo=ritmo) }}">Subscrever calendario (.ics)</a></p>
+<p class="page-actions"><a href="{{ filters.feed_url }}">Subscrever calendario (.ics)</a></p>
 {% endblock %}

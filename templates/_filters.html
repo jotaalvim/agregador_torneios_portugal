@@ -1,0 +1,22 @@
+{# The filters on the list and the calendar. Each chip is the same view with
+   one filter changed and the rest kept, except that picking a district drops
+   the search, which is often a place name. #}
+
+{# Doubles as the legend for the district colours in the rows and the grid. #}
+<nav class="filters filters-districts" aria-label="Filtrar por distrito">
+  <a href="{{ filters.url(district='', q='') }}" class="filter{% if not filters.district %} is-active{% endif %}"{% if not filters.district %} aria-current="page"{% endif %}>Todos</a>
+  {% for d in districts %}
+  <a href="{{ filters.url(district=d.slug, q='') }}" class="filter d-{{ d.slot }}{% if filters.district == d.slug %} is-active{% endif %}"{% if filters.district == d.slug %} aria-current="page"{% endif %}>
+    <span class="district-dot" aria-hidden="true"></span>{{ d.name }}
+  </a>
+  {% endfor %}
+</nav>
+
+<nav class="filters" aria-label="Filtrar por ritmo">
+  <a href="{{ filters.url(ritmo='') }}" class="filter{% if not filters.ritmo %} is-active{% endif %}"{% if not filters.ritmo %} aria-current="page"{% endif %}>Todos os ritmos</a>
+  {% for slug, r in ritmos.items() %}
+  <a href="{{ filters.url(ritmo=slug) }}" class="filter{% if filters.ritmo == slug %} is-active{% endif %}"{% if filters.ritmo == slug %} aria-current="page"{% endif %}>
+    {{ r.label }} <span class="filter-hint">{{ r.hint }}</span>
+  </a>
+  {% endfor %}
+</nav>

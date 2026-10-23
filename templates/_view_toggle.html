@@ -1,8 +1,6 @@
 {# List <-> calendar switch, shown on phones only (the masthead links do the
-   same on wider screens). Keeps the district filter (`slug`, empty for all
-   districts) and the ritmo across the switch; `view_mode` is "list" or
-   "calendar". #}
+   same on wider screens). Both keep the filters. #}
 <nav class="tabs" aria-label="Vista">
-  <a href="{{ query_url('/distrito/' ~ slug if slug else '/', ritmo=ritmo) }}"{% if view_mode == 'list' %} class="is-active" aria-current="page"{% endif %}>Lista</a>
-  <a href="{{ query_url('/calendario', distrito=slug, ritmo=ritmo) }}"{% if view_mode == 'calendar' %} class="is-active" aria-current="page"{% endif %}>Calendario</a>
+  <a href="{{ filters.url(view='list') }}"{% if filters.view == 'list' %} class="is-active" aria-current="page"{% endif %}>Lista</a>
+  <a href="{{ filters.url(view='calendar') }}"{% if filters.view == 'calendar' %} class="is-active" aria-current="page"{% endif %}>Calendario</a>
 </nav>
