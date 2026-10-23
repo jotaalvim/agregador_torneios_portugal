@@ -1,0 +1,13 @@
+{# Ritmo filter, under the district one (_district_chips.html) and taking the
+   same `chips_mode` and `active_slug`. `ritmo` is the group being shown, or
+   empty for all of them. Switching ritmo keeps the district and the search. #}
+{% set chips_path = '/calendario' if chips_mode == 'calendar' else ('/distrito/' ~ active_slug if active_slug else '/') %}
+{% set chips_district = active_slug if chips_mode == 'calendar' else '' %}
+<nav class="filters filters-ritmo" aria-label="Filtrar por ritmo">
+  <a href="{{ query_url(chips_path, distrito=chips_district, q=q|default('')) }}" class="filter{% if not ritmo %} is-active{% endif %}"{% if not ritmo %} aria-current="page"{% endif %}>Todos os ritmos</a>
+  {% for slug, c in time_controls.items() %}
+  <a href="{{ query_url(chips_path, distrito=chips_district, q=q|default(''), ritmo=slug) }}" class="filter{% if ritmo == slug %} is-active{% endif %}"{% if ritmo == slug %} aria-current="page"{% endif %}>
+    {{ c.label }} <span class="filter-hint">{{ c.hint }}</span>
+  </a>
+  {% endfor %}
+</nav>

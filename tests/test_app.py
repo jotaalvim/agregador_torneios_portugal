@@ -53,6 +53,64 @@ def test_search_no_results_message(client):
     assert "Sem torneios proximos" in r.text
 
 
+SEED_BY_RITMO = {
+    "rapidas": ["Blitz de Ano Novo de Viana do Castelo"],
+    "semi-rapidas": ["IV Semi-Rapidas de Guimaraes"],
+    "classicas": ["II Open Internacional de Braga", "Open de Outono do Porto"],
+}
+
+
+@pytest.mark.parametrize("ritmo", SEED_BY_RITMO)
+def test_ritmo_filter_shows_only_that_group(client, ritmo):
+    page = client.get("/", params={"ritmo": ritmo}).text
+    feed = client.get("/calendario.ics", params={"ritmo": ritmo}).text
+    for group, titles in SEED_BY_RITMO.items():
+        for title in titles:
+            assert (title in page) == (group == ritmo), title
+            assert (f"SUMMARY:{title}" in feed) == (group == ritmo), title
+
+
+def test_ritmo_filter_with_district_and_calendar(client):
+    r = client.get("/distrito/braga", params={"ritmo": "semi-rapidas"})
+    assert "IV Semi-Rapidas de Guimaraes" in r.text
+    assert "II Open Internacional de Braga" not in r.text
+
+    r = client.get("/calendario", params={"distrito": "braga", "ritmo": "classicas"})
+    assert "II Open Internacional de Braga" in r.text
+    assert "IV Semi-Rapidas de Guimaraes" not in r.text
+
+
+def test_ritmo_filter_ignores_unknown_value(client):
+    r = client.get("/", params={"ritmo": "bogus"})
+    assert r.status_code == 200
+    for titles in SEED_BY_RITMO.values():
+        for title in titles:
+            assert title in r.text
+    assert 'class="filter is-active" aria-current="page">Todos os ritmos' in r.text
+
+
+def test_ritmo_filter_is_kept_by_the_other_links(client):
+    r = client.get("/", params={"q": "Open", "ritmo": "classicas"})
+    assert 'href="/distrito/braga?ritmo=classicas"' in r.text
+    assert 'href="/calendario?ritmo=classicas"' in r.text
+    assert 'href="/calendario.ics?ritmo=classicas"' in r.text
+    assert '<input type="hidden" name="ritmo" value="classicas">' in r.text
+    assert 'class="search-clear" href="/?ritmo=classicas"' in r.text
+    # Switching ritmo keeps the search.
+    assert 'href="/?q=Open&amp;ritmo=rapidas"' in r.text
+    assert 'href="/?q=Open" class="filter">Todos os ritmos' in r.text
+
+    r = client.get("/calendario", params={"distrito": "braga", "ritmo": "classicas"})
+    assert 'href="/distrito/braga?ritmo=classicas"' in r.text
+    assert 'href="/calendario?distrito=porto&amp;ritmo=classicas"' in r.text
+    assert 'href="/calendario?distrito=braga&amp;ritmo=rapidas"' in r.text
+
+
+def test_ritmo_filter_no_results_message(client):
+    r = client.get("/distrito/viana-do-castelo", params={"ritmo": "classicas"})
+    assert "Sem torneios de classicas agendados neste distrito." in r.text
+
+
 def test_district_page_404_for_unknown_slug(client):
     r = client.get("/distrito/does-not-exist")
     assert r.status_code == 404

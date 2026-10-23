@@ -1,5 +1,5 @@
 import unicodedata
-from urllib.parse import urlparse
+from urllib.parse import urlencode, urlparse
 
 _DEACCENT_TABLE = str.maketrans(
     "àáâãäçèéêëìíîïñòóôõöùúûü",
@@ -26,6 +26,13 @@ def is_safe_url(value: str | None) -> bool:
     if not value:
         return True
     return urlparse(value).scheme in ("http", "https")
+
+
+def query_url(path: str, **params: str) -> str:
+    """`path` with the non-empty `params` as its query string, for links that
+    carry the filters on screen over to another view."""
+    query = urlencode({k: v for k, v in params.items() if v})
+    return f"{path}?{query}" if query else path
 
 
 def ics_escape(value: str) -> str:

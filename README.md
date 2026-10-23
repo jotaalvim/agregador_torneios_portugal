@@ -36,6 +36,14 @@ kept for reference — it is not used at runtime).
   detail (no search), and `/calendario` shows a 12-month calendar grid,
   optionally filtered with `?distrito=`. `.ics` calendar export is
   available per-tournament and combined at `/calendario.ics`.
+- The lists, the calendar and `/calendario.ics` also filter by ritmo with
+  `?ritmo=`: `rapidas` (blitz), `semi-rapidas` (rapid) or `classicas`. The
+  group comes from the time control text, by FIDE's limits: base +
+  increment up to 10 minutes is blitz, under 60 rapid, anything longer
+  classical (`time_control_category` in `app/view.py`). A time control
+  with no minutes in it to read only shows with no ritmo picked. The ritmo
+  stays when you switch district, view or search, and an unknown value
+  shows everything.
 - Anyone can suggest a correction or leave a note from a tournament's page
   (**Corrigir ou acrescentar informacao**, `/torneios/{id}/corrigir`). Each
   field shows what the site says now and opens for editing when tapped;
@@ -134,6 +142,12 @@ path if you've forgotten where it is.
 
 ```bash
 cd /path/to/the/checkout
+make
+```
+
+which runs (see [Makefile](Makefile)):
+
+```bash
 git pull
 docker compose stop goatcounter     # frees RAM for the build
 docker compose up -d --build web
@@ -251,9 +265,10 @@ documented separately in [SCRAPING.md](SCRAPING.md).
 ```
 
 Tests spin up the FastAPI app against a throwaway SQLite file (via the
-`DATABASE_URL` env var) and cover the public pages, search, the submission
-form (including the honeypot), the admin login/approve flow, and visitor
-corrections from the public form through the admin review.
+`DATABASE_URL` env var) and cover the public pages, search, the ritmo filter
+(including how every time control on the site sorts into its group), the
+submission form (including the honeypot), the admin login/approve flow, and
+visitor corrections from the public form through the admin review.
 
 ## Known limitations (MVP scope)
 

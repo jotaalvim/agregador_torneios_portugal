@@ -234,6 +234,15 @@ inventing a plausible-looking wrong answer. **No feed carries a time control
 at all** — `fetch_sources.py` leaves it empty so the review step and `gaps.py`
 both flag it.
 
+The site's ritmo filter sorts tournaments into these three groups by reading
+the numbers in this field, so the format is not just cosmetic. Base +
+increment up to 10 is Rápidas, under 60 Semi-rápidas, 60 or more Clássicas
+(FIDE's limits). Edge cases follow those limits too: `10 + 0` and `5 + 5`
+count as Rápidas, and `30 + 30` as Clássicas. A time control
+with no minutes in it, like `a definir`, drops out of every group, so the
+tournament only appears when no ritmo is picked. Read the group for any text
+with `time_control_category()` in `app/view.py`.
+
 ### Everything else
 
 - **title** — official name, cleaned. Strip embedded dates, times and prize

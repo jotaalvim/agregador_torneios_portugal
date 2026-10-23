@@ -88,6 +88,57 @@ def time_control_html(text: str) -> Markup:
     return Markup(escaped.replace("′", '<span class="tc-min">′</span>'))
 
 
+# The ritmo filter: time controls grouped the way Portuguese chess names them,
+# slowest first as in SCRAPING.md's table. "Rapidas" is blitz, not rapid (the
+# trap that table warns about), so each chip also shows the usual ritmo of its
+# group (`hint`).
+TIME_CONTROLS = {
+    "classicas": {"label": "Classicas", "hint": "90+30"},
+    "semi-rapidas": {"label": "Semi-rapidas", "hint": "10+5"},
+    "rapidas": {"label": "Rapidas", "hint": "3+2"},
+}
+
+_TC_HOURS = re.compile(r"(\d+)\s*h(?:oras?)?(?![a-z])\s*(\d{1,2})?")
+_TC_BASE_INCREMENT = re.compile(r"(\d+)(?:\s*/\s*\d+)?[^\d+]*\+\s*(\d+)")
+_TC_BASE_ONLY = re.compile(r"(\d+)\s*(?:['′’]|m(?:in\w*)?\b)")
+
+
+def time_control_minutes(text: str) -> int | None:
+    """Minutes per player for a 60-move game, the base plus 60 times the
+    increment, which is what FIDE tells blitz, rapid and classical apart by.
+    Reads the first base + increment in the text, wherever it is ("90' +
+    30''/lance", "11 rondas, 3+2"), hours ("1h30 + 30") and a base on its own
+    ("15 min"). "90/40 + 30 + 30" reads as 90 + 30: short of the real total,
+    but its first period alone makes it classical. None with no time in it."""
+    s = _TC_HOURS.sub(lambda m: f"{int(m[1]) * 60 + int(m[2] or 0)} min", deaccent(text))
+    if m := _TC_BASE_INCREMENT.search(s):
+        return int(m[1]) + int(m[2])
+    if m := _TC_BASE_ONLY.search(s):
+        return int(m[1])
+    return None
+
+
+def time_control_category(text: str) -> str | None:
+    """The TIME_CONTROLS group of a ritmo, by FIDE's limits: blitz up to 10
+    minutes, rapid under 60, classical from 60. None when it has no time in
+    it; that tournament then only shows with no ritmo picked."""
+    minutes = time_control_minutes(text)
+    if minutes is None:
+        return None
+    if minutes <= 10:
+        return "rapidas"
+    if minutes < 60:
+        return "semi-rapidas"
+    return "classicas"
+
+
+def time_control_slug(value: str) -> str:
+    """The TIME_CONTROLS key a ?ritmo= value names, or "" for none: an unknown
+    one shows every ritmo rather than an empty list."""
+    slug = slugify(value)
+    return slug if slug in TIME_CONTROLS else ""
+
+
 def share_text(t: Tournament, page_url: str | None = None) -> str:
     """Plain-text summary formatted for sharing (WhatsApp, clipboard, etc):
     date/district/title on the first line, then ritmo and whichever links
@@ -142,6 +193,13 @@ def search_tournaments(tournaments: list[Tournament], q: str) -> list[Tournament
         return tournaments
     fields = ("title", "location", "organizer", "district", "time_control")
     return [t for t in tournaments if any(q in deaccent(getattr(t, f) or "") for f in fields)]
+
+
+def filter_time_control(tournaments: list[Tournament], ritmo: str) -> list[Tournament]:
+    """Only the tournaments in the `ritmo` group; all of them for no group."""
+    if ritmo not in TIME_CONTROLS:
+        return tournaments
+    return [t for t in tournaments if time_control_category(t.time_control) == ritmo]
 
 
 def split_upcoming_past(tournaments: list[Tournament], today: date) -> tuple[list[dict], list[dict]]:

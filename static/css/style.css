@@ -480,6 +480,11 @@ button.link-btn:hover { text-decoration-color: currentColor; text-decoration-thi
 }
 .filter:hover { border-bottom-color: var(--line); }
 .filter.is-active { border-bottom-color: var(--fg); font-weight: 700; }
+/* The ritmo filter sits right under the district one, so the two read as one
+   block. Each group shows its usual ritmo, set like the ritmo column: on its
+   own "Rapidas" is easy to take for rapid when it means blitz. */
+.filters:has(+ .filters) { margin-bottom: .35rem; }
+.filter-hint { color: var(--muted); font-family: var(--display); font-size: 1.05rem; font-weight: 600; }
 
 /* Legend swatch, also used in the tournament list so a row and its day in the
    grid carry the same colour. Decorative only -- the district name is always
@@ -1070,6 +1075,16 @@ button.link-btn.reject { color: var(--danger); }
     mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent);
   }
   .filters::-webkit-scrollbar { display: none; }
+  /* Except the ritmo one: its four chips wrap onto a second line, where
+     scrolling would start the last of them off the edge of the screen. */
+  .filters-ritmo {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    margin-inline: 0;
+    padding-inline: 0;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
 
   dl.meta { grid-template-columns: 1fr; }
   dl.meta dt { padding-bottom: 0; border-bottom: 0; }

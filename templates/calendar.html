@@ -8,13 +8,15 @@
   {% with view_mode = "calendar", slug = selected_district %}{% include "_view_toggle.html" %}{% endwith %}
 </div>
 
-{% with chips_mode = "calendar", active_slug = selected_district %}{% include "_district_chips.html" %}{% endwith %}
+{% with chips_mode = "calendar", active_slug = selected_district %}{% include "_district_chips.html" %}{% include "_time_control_chips.html" %}{% endwith %}
 
 {% include "_calendar_grid.html" %}
 
 <h2 class="section-title">Lista de torneios{% if upcoming %} <span class="count">({{ upcoming|length }})</span>{% endif %}</h2>
 {% if upcoming %}
 {% with rows = upcoming %}{% include "_tournament_list.html" %}{% endwith %}
+{% elif ritmo %}
+<p class="empty">Sem torneios de {{ time_controls[ritmo].label|lower }} agendados.</p>
 {% else %}
 <p class="empty">Sem torneios agendados.</p>
 {% endif %}
@@ -26,7 +28,7 @@
 </details>
 {% endif %}
 
-<p class="page-actions"><a href="/calendario.ics{% if selected_district %}?distrito={{ selected_district }}{% endif %}">Subscrever calendario (.ics)</a></p>
+<p class="page-actions"><a href="{{ query_url('/calendario.ics', distrito=selected_district, ritmo=ritmo) }}">Subscrever calendario (.ics)</a></p>
 
 <script>
   (function () {

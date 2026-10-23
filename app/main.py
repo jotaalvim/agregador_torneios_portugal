@@ -25,7 +25,7 @@ from .config import GOATCOUNTER_ENDPOINT, GOATCOUNTER_SCRIPT_URL, SECRET_KEY, SE
 from .database import Base, engine, get_db, run_migrations
 from .models import Correction, CorrectionStatus, Status, Tournament
 from .seed import seed_if_empty
-from .utils import ics_escape, is_safe_url
+from .utils import ics_escape, is_safe_url, query_url
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -45,12 +45,14 @@ app = FastAPI(title="Torneios Xadrez Portugal", lifespan=lifespan)
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, same_site="lax", https_only=SESSION_HTTPS_ONLY)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+templates.env.globals["query_url"] = query_url
 
 
 def base_ctx(db: Session, request: Request) -> dict:
     return {
         "request": request,
         "districts": view.districts_nav(crud.get_district_names(db)),
+        "time_controls": view.TIME_CONTROLS,
         "goatcounter_script_url": GOATCOUNTER_SCRIPT_URL,
         "goatcounter_endpoint": GOATCOUNTER_ENDPOINT,
     }
@@ -178,38 +180,42 @@ def sitemap(request: Request, db: Session = Depends(get_db)) -> Response:
 
 
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request, db: Session = Depends(get_db), q: str = ""):
+def index(request: Request, db: Session = Depends(get_db), q: str = "", ritmo: str = ""):
     today = date.today()
-    tournaments = view.search_tournaments(crud.list_approved(db), q)
+    ritmo = view.time_control_slug(ritmo)
+    tournaments = view.filter_time_control(view.search_tournaments(crud.list_approved(db), q), ritmo)
     upcoming, past = view.split_upcoming_past(tournaments, today)
     ctx = base_ctx(db, request) | {
         "title": "Torneios",
         "upcoming": upcoming,
         "past": past,
         "q": q,
+        "ritmo": ritmo,
     }
     return templates.TemplateResponse(request, "index.html", ctx)
 
 
 @app.get("/distrito/{slug}", response_class=HTMLResponse)
-def district(slug: str, request: Request, db: Session = Depends(get_db), q: str = ""):
+def district(slug: str, request: Request, db: Session = Depends(get_db), q: str = "", ritmo: str = ""):
     name, tournaments = crud.list_approved_by_district_slug(db, slug)
     if name is None:
         raise HTTPException(status_code=404, detail="Distrito nao encontrado")
     today = date.today()
-    tournaments = view.search_tournaments(tournaments, q)
+    ritmo = view.time_control_slug(ritmo)
+    tournaments = view.filter_time_control(view.search_tournaments(tournaments, q), ritmo)
     upcoming, past = view.split_upcoming_past(tournaments, today)
     ctx = base_ctx(db, request) | {
         "district": name,
         "upcoming": upcoming,
         "past": past,
         "q": q,
+        "ritmo": ritmo,
     }
     return templates.TemplateResponse(request, "district.html", ctx)
 
 
 @app.get("/calendario", response_class=HTMLResponse)
-def calendar_view(request: Request, db: Session = Depends(get_db), distrito: str = ""):
+def calendar_view(request: Request, db: Session = Depends(get_db), distrito: str = "", ritmo: str = ""):
     if distrito:
         name, tournaments = crud.list_approved_by_district_slug(db, distrito)
         if name is None:
@@ -217,10 +223,13 @@ def calendar_view(request: Request, db: Session = Depends(get_db), distrito: str
     else:
         tournaments = crud.list_approved(db)
     today = date.today()
+    ritmo = view.time_control_slug(ritmo)
+    tournaments = view.filter_time_control(tournaments, ritmo)
     upcoming, past = view.split_upcoming_past(tournaments, today)
     ctx = base_ctx(db, request) | {
         "months": view.build_season_calendar(tournaments, today),
         "selected_district": distrito,
+        "ritmo": ritmo,
         "upcoming": upcoming,
         "past": past,
     }
@@ -252,14 +261,14 @@ def tournament_ics(tournament_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/calendario.ics")
-def calendar_feed(db: Session = Depends(get_db), distrito: str = ""):
+def calendar_feed(db: Session = Depends(get_db), distrito: str = "", ritmo: str = ""):
     if distrito:
         name, tournaments = crud.list_approved_by_district_slug(db, distrito)
         if name is None:
             raise HTTPException(status_code=404, detail="Distrito nao encontrado")
     else:
         tournaments = crud.list_approved(db)
-    body = render_ics(tournaments)
+    body = render_ics(view.filter_time_control(tournaments, view.time_control_slug(ritmo)))
     return PlainTextResponse(body, media_type="text/calendar")
 
 
