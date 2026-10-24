@@ -25,7 +25,7 @@ from .config import GOATCOUNTER_ENDPOINT, GOATCOUNTER_SCRIPT_URL, SECRET_KEY, SE
 from .database import Base, SessionLocal, engine, get_db, run_migrations
 from .models import Correction, CorrectionStatus, Status, Tournament
 from .seed import seed_if_empty
-from .utils import ics_escape, is_safe_url
+from .utils import ics_escape, ics_fold, is_safe_url
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -103,21 +103,21 @@ def validate_submission(values: dict) -> dict:
     errors = {}
     for field in REQUIRED_FIELDS:
         if not (values.get(field) or "").strip():
-            errors[field] = "Campo obrigatorio."
+            errors[field] = "Campo obrigatório."
 
     if values.get("date"):
         try:
             date.fromisoformat(values["date"])
         except ValueError:
-            errors["date"] = "Data invalida."
+            errors["date"] = "Data inválida."
 
     for field in URL_FIELDS:
         if not is_safe_url(values.get(field) or None):
-            errors[field] = "Tem de comecar por http:// ou https://."
+            errors[field] = "Tem de começar por http:// ou https://."
 
     email = (values.get("submitted_by_email") or "").strip()
     if email and "@" not in email:
-        errors["submitted_by_email"] = "Email invalido."
+        errors["submitted_by_email"] = "Email inválido."
 
     for field, limit in MAX_LENGTHS.items():
         # Browsers send textarea line breaks as CRLF; count each one once, as
@@ -125,7 +125,7 @@ def validate_submission(values: dict) -> dict:
         # fail when the admin saves it.
         length = len((values.get(field) or "").replace("\r\n", "\n"))
         if field not in errors and length > limit:
-            errors[field] = f"Maximo de {limit} caracteres."
+            errors[field] = f"Máximo de {limit} caracteres."
 
     return errors
 
@@ -149,7 +149,7 @@ CORRECTION_MAX_LENGTHS = {
 def get_published(db: Session, tournament_id: int) -> Tournament:
     t = crud.get_tournament(db, tournament_id)
     if t is None or t.status != Status.approved:
-        raise HTTPException(status_code=404, detail="Torneio nao encontrado")
+        raise HTTPException(status_code=404, detail="Torneio não encontrado")
     return t
 
 
@@ -198,7 +198,7 @@ def sitemap(request: Request, db: Session = Depends(get_db)) -> Response:
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request, db: Session = Depends(get_db), q: str = "", ritmo: str = Depends(ritmo_param)):
-    today = date.today()
+    today = view.today_in_lisbon()
     tournaments = view.filter_by_ritmo(view.search_tournaments(crud.list_approved(db), q), ritmo)
     upcoming, past = view.split_upcoming_past(tournaments, today)
     ctx = base_ctx(db, request) | {
@@ -216,8 +216,8 @@ def district(
 ):
     name, tournaments = crud.list_approved_by_district_slug(db, slug)
     if name is None:
-        raise HTTPException(status_code=404, detail="Distrito nao encontrado")
-    today = date.today()
+        raise HTTPException(status_code=404, detail="Distrito não encontrado")
+    today = view.today_in_lisbon()
     tournaments = view.filter_by_ritmo(view.search_tournaments(tournaments, q), ritmo)
     upcoming, past = view.split_upcoming_past(tournaments, today)
     ctx = base_ctx(db, request) | {
@@ -236,10 +236,10 @@ def calendar_view(
     if distrito:
         name, tournaments = crud.list_approved_by_district_slug(db, distrito)
         if name is None:
-            raise HTTPException(status_code=404, detail="Distrito nao encontrado")
+            raise HTTPException(status_code=404, detail="Distrito não encontrado")
     else:
         tournaments = crud.list_approved(db)
-    today = date.today()
+    today = view.today_in_lisbon()
     tournaments = view.filter_by_ritmo(tournaments, ritmo)
     upcoming, past = view.split_upcoming_past(tournaments, today)
     ctx = base_ctx(db, request) | {
@@ -255,55 +255,75 @@ def calendar_view(
 def tournament_detail(tournament_id: int, request: Request, db: Session = Depends(get_db)):
     t = crud.get_tournament(db, tournament_id)
     if t is None or t.status != Status.approved:
-        raise HTTPException(status_code=404, detail="Torneio nao encontrado")
-    today = date.today()
-    row_ctx = view.row(t, today, page_url=str(request.url))
+        raise HTTPException(status_code=404, detail="Torneio não encontrado")
+    today = view.today_in_lisbon()
+    page_url = str(request.url)
+    row_ctx = view.row(t, today, page_url=page_url)
     _, district_tournaments = crud.list_approved_by_district_slug(db, row_ctx["district_slug"])
     ctx = base_ctx(db, request) | {
         "t": row_ctx,
         "months": view.build_season_calendar(district_tournaments, today, anchor=t.date),
+        "event": view.event_schema(t, page_url, str(request.url_for("static", path="og-image.png"))),
+        "google_calendar_url": view.google_calendar_url(t, page_url),
     }
     return templates.TemplateResponse(request, "tournament.html", ctx)
 
 
 @app.get("/torneios/{tournament_id}/ics")
-def tournament_ics(tournament_id: int, db: Session = Depends(get_db)):
+def tournament_ics(tournament_id: int, request: Request, db: Session = Depends(get_db)):
     t = crud.get_tournament(db, tournament_id)
     if t is None or t.status != Status.approved:
-        raise HTTPException(status_code=404, detail="Torneio nao encontrado")
-    body = render_ics([t])
+        raise HTTPException(status_code=404, detail="Torneio não encontrado")
+    body = render_ics([t], request)
     return PlainTextResponse(body, media_type="text/calendar")
 
 
 @app.get("/calendario.ics")
-def calendar_feed(db: Session = Depends(get_db), distrito: str = "", ritmo: str = Depends(ritmo_param)):
+def calendar_feed(
+    request: Request, db: Session = Depends(get_db), distrito: str = "", ritmo: str = Depends(ritmo_param)
+):
+    calendar_name = ["Torneios Xadrez Portugal"]
     if distrito:
         name, tournaments = crud.list_approved_by_district_slug(db, distrito)
         if name is None:
-            raise HTTPException(status_code=404, detail="Distrito nao encontrado")
+            raise HTTPException(status_code=404, detail="Distrito não encontrado")
+        calendar_name.append(name)
     else:
         tournaments = crud.list_approved(db)
-    body = render_ics(view.filter_by_ritmo(tournaments, ritmo))
+    if ritmo:
+        calendar_name.append(view.RITMOS[ritmo]["label"])
+    body = render_ics(view.filter_by_ritmo(tournaments, ritmo), request, " · ".join(calendar_name))
     return PlainTextResponse(body, media_type="text/calendar")
 
 
-def render_ics(tournaments: list[Tournament]) -> str:
+def render_ics(tournaments: list[Tournament], request: Request, calendar_name: str = "") -> str:
+    """`calendar_name` is for a feed people subscribe to: it names the calendar
+    in their app, which is also asked to fetch the feed again every 6 hours."""
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Xadrez Distrito de Braga//PT"]
+    if calendar_name:
+        lines += [
+            f"X-WR-CALNAME:{ics_escape(calendar_name)}",
+            "REFRESH-INTERVAL;VALUE=DURATION:PT6H",
+            "X-PUBLISHED-TTL:PT6H",
+        ]
     for t in tournaments:
+        page_url = str(request.url_for("tournament_detail", tournament_id=t.id))
         lines += [
             "BEGIN:VEVENT",
+            # Keeps the site's old name: a new UID would show every event
+            # twice in the calendars already subscribed.
             f"UID:tournament-{t.id}@xadreznorte",
             f"DTSTAMP:{stamp}",
             f"DTSTART;VALUE=DATE:{t.date.strftime('%Y%m%d')}",
             f"SUMMARY:{ics_escape(t.title)}",
             f"LOCATION:{ics_escape(t.location)}",
+            f"DESCRIPTION:{ics_escape(view.calendar_details(t, page_url))}",
+            f"URL:{page_url}",
+            "END:VEVENT",
         ]
-        if t.description:
-            lines.append(f"DESCRIPTION:{ics_escape(t.description)}")
-        lines.append("END:VEVENT")
     lines.append("END:VCALENDAR")
-    return "\r\n".join(lines) + "\r\n"
+    return "".join(ics_fold(line) + "\r\n" for line in lines)
 
 
 @app.get("/submeter", response_class=HTMLResponse)
@@ -380,7 +400,7 @@ def submit_form_post(
         logger.exception("Falha ao gravar submissao")
         db.rollback()
         ctx = base_ctx(db, request) | {
-            "errors": {"general": "Nao foi possivel gravar a submissao. Tenta novamente."},
+            "errors": {"general": "Não foi possível gravar a submissão. Tenta novamente."},
             "values": values,
         }
         return templates.TemplateResponse(request, "submit.html", ctx, status_code=500)
@@ -399,7 +419,7 @@ def submit_thanks(request: Request, db: Session = Depends(get_db)):
 def correction_form(tournament_id: int, request: Request, db: Session = Depends(get_db)):
     t = get_published(db, tournament_id)
     ctx = base_ctx(db, request) | {
-        "t": view.row(t, date.today()),
+        "t": view.row(t, view.today_in_lisbon()),
         "fields": view.correction_form_fields(t, {}, {}),
         "values": {},
         "errors": {},
@@ -467,18 +487,18 @@ def correction_post(
     }
     errors = {field: msg for field, msg in validate_submission(merged).items() if field in changes}
     if not is_safe_url(extra["source_url"] or None):
-        errors["source_url"] = "Tem de comecar por http:// ou https://."
+        errors["source_url"] = "Tem de começar por http:// ou https://."
     if extra["submitted_by_email"] and "@" not in extra["submitted_by_email"]:
-        errors["submitted_by_email"] = "Email invalido."
+        errors["submitted_by_email"] = "Email inválido."
     for field, limit in CORRECTION_MAX_LENGTHS.items():
         if field not in errors and len(extra[field]) > limit:
-            errors[field] = f"Maximo de {limit} caracteres."
+            errors[field] = f"Máximo de {limit} caracteres."
     if not changes and not extra["cancelled"] and not extra["note"]:
         errors["general"] = "Corrige pelo menos um campo ou escreve uma nota."
     elif errors:
         # The fields in error can be screens below the top of a long form.
         labels = [label for field, label in CORRECTION_LABELS.items() if field in errors]
-        errors["general"] = "Ha campos por rever mais abaixo: " + ", ".join(labels) + "."
+        errors["general"] = "Há campos por rever mais abaixo: " + ", ".join(labels) + "."
 
     if errors:
         values = {
@@ -486,7 +506,7 @@ def correction_post(
             for name in view.FIELD_LABELS
         } | extra
         ctx = base_ctx(db, request) | {
-            "t": view.row(t, date.today()),
+            "t": view.row(t, view.today_in_lisbon()),
             "fields": view.correction_form_fields(t, values, errors, seen),
             "values": values,
             "errors": errors,
@@ -508,7 +528,7 @@ def correction_post(
 @app.get("/torneios/{tournament_id}/corrigir/obrigado", response_class=HTMLResponse)
 def correction_thanks(tournament_id: int, request: Request, db: Session = Depends(get_db)):
     t = get_published(db, tournament_id)
-    ctx = base_ctx(db, request) | {"t": view.row(t, date.today())}
+    ctx = base_ctx(db, request) | {"t": view.row(t, view.today_in_lisbon())}
     return templates.TemplateResponse(request, "correct_success.html", ctx)
 
 
@@ -540,7 +560,7 @@ def admin_login_post(
         return RedirectResponse("/admin", status_code=303)
 
     register_login_failure(request)
-    ctx = base_ctx(db, request) | {"error": "Credenciais invalidas."}
+    ctx = base_ctx(db, request) | {"error": "Credenciais inválidas."}
     return templates.TemplateResponse(request, "admin/login.html", ctx, status_code=400)
 
 
@@ -599,7 +619,7 @@ def admin_new_post(
     }
     errors = validate_submission(values)
     if status not in (Status.pending, Status.approved, Status.rejected):
-        errors["status"] = "Estado invalido."
+        errors["status"] = "Estado inválido."
 
     if errors:
         ctx = base_ctx(db, request) | {"values": values, "errors": errors, "csrf_token": get_csrf_token(request)}
@@ -719,8 +739,8 @@ def admin_edit_post(
         pending = correction is not None and correction.status == CorrectionStatus.pending
         ctx = base_ctx(db, request) | {
             "values": view.review_values(t, correction) if pending else view.edit_values(t),
-            "errors": {"general": "Este torneio foi alterado noutra janela depois de abrires esta pagina. "
-                                  "O formulario foi recarregado com a versao atual: confere e guarda outra vez."},
+            "errors": {"general": "Este torneio foi alterado noutra janela depois de abrires esta página. "
+                                  "O formulário foi recarregado com a versão atual: confere e guarda outra vez."},
             "csrf_token": get_csrf_token(request),
             "version": view.edit_version(t),
         }
@@ -748,7 +768,7 @@ def admin_edit_post(
     }
     errors = validate_submission(values)
     if status not in (Status.pending, Status.approved, Status.rejected):
-        errors["status"] = "Estado invalido."
+        errors["status"] = "Estado inválido."
 
     if errors:
         # Re-render with what the admin just typed (not the stale DB record),

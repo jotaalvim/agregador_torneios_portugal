@@ -28,6 +28,22 @@ def is_safe_url(value: str | None) -> bool:
     return urlparse(value).scheme in ("http", "https")
 
 
+def ics_fold(line: str) -> str:
+    """A calendar line folded at 75 octets, as RFC 5545 asks: the rest goes on
+    continuation lines that start with a space. A character is never split,
+    since a multi-byte one cut in half would garble the text."""
+    chunks, current, size = [], "", 0
+    for char in line:
+        width = len(char.encode("utf-8"))
+        if size + width > (74 if chunks else 75):  # a continuation's space counts
+            chunks.append(current)
+            current, size = "", 0
+        current += char
+        size += width
+    chunks.append(current)
+    return "\r\n ".join(chunks)
+
+
 def ics_escape(value: str) -> str:
     value = value.replace("\r\n", "\n").replace("\r", "\n")
     return (

@@ -262,7 +262,8 @@ tournament only appears when no ritmo is picked. `ritmo_of()` in
 National championships with no announced venue use `Nacional`, with
 `Local a anunciar pela FPX` as the location. This matches how the FPX and
 chess-results categorize (chess-results `bdld1=2` is literally "Nacional").
-Move them to the real district once a venue is published.
+Move them to the real district once a venue is published: that is also when
+the tournament page starts carrying the event data search engines list it by.
 
 ## Traps
 

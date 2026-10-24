@@ -1,7 +1,7 @@
 # Xadrez Norte
 
-Chess tournament aggregator for the north of Portugal (Braga, Porto, Viana do
-Castelo, and beyond). FastAPI + SQLite backend with a public submission form
+Chess tournament aggregator for Portugal. It started with the north (Braga,
+Porto, Viana do Castelo) and now lists tournaments from the whole country. FastAPI + SQLite backend with a public submission form
 and an admin moderation queue.
 
 This replaces the previous static Hakyll site (archived in `legacy-hakyll/`,
@@ -22,7 +22,7 @@ kept for reference — it is not used at runtime).
   them.
 - The admin logs in at `/admin/login` and sees three lists at `/admin`:
   **Pendentes** (new submissions, with approve/reject/edit actions),
-  **Correcoes pendentes** (visitors' corrections, see below) and
+  **Correções pendentes** (visitors' corrections, see below) and
   **Todos os torneios** (every tournament regardless of status, with
   edit/delete). Approving a pending submission is what makes it public;
   rejecting or deleting does not. Admins can also add a tournament directly
@@ -35,7 +35,13 @@ kept for reference — it is not used at runtime).
   district, or time control. `/torneios/{id}` shows a single tournament's
   detail (no search), and `/calendario` shows a 12-month calendar grid,
   optionally filtered with `?distrito=`. `.ics` calendar export is
-  available per-tournament and combined at `/calendario.ics`.
+  available per-tournament and combined at `/calendario.ics`. Each event
+  carries the ritmo, the organizer, the registration and regulation links
+  and the tournament's page; a subscribed feed is named after its filters
+  ("Torneios Xadrez Portugal · Braga · Clássicas") and asks calendar apps
+  to refresh it every 6 hours. Tournament pages also link to Google
+  Calendar's new-event page, since on Android an `.ics` download often
+  opens no calendar at all.
 - The lists, the calendar and `/calendario.ics` also filter by ritmo with
   `?ritmo=`: `classicas`, `semi-rapidas` (rapid) or `rapidas` (blitz). The
   group comes from the first `X + Y` in the time control, by FIDE's limits:
@@ -45,16 +51,16 @@ kept for reference — it is not used at runtime).
   when you switch district, view or search, and an unknown value shows
   everything.
 - Anyone can suggest a correction or leave a note from a tournament's page
-  (**Corrigir ou acrescentar informacao**, `/torneios/{id}/corrigir`). Each
+  (**Corrigir ou acrescentar informação**, `/torneios/{id}/corrigir`). Each
   field shows what the site says now and opens for editing when tapped;
   only fields that actually differ are stored, along with an optional
   note, a "cancelled or postponed" box and a source link. A suggestion
-  never changes the tournament by itself: it waits under **Correcoes
+  never changes the tournament by itself: it waits under **Correções
   pendentes** in `/admin`. **rever** opens the normal edit form with the
   suggested values filled in, the changed fields highlighted and the live
   value under each, so saving applies whatever is left in the form and
   closes the correction. **rejeitar** on the dashboard, and **Rejeitar
-  sugestao** or **Marcar como tratada sem guardar** on that review page,
+  sugestão** or **Marcar como tratada sem guardar** on that review page,
   close it without touching the tournament. Changes are measured against
   what the visitor was shown, so an edit made while their form was open
   is not taken as theirs; a field edited after the suggestion was made is
@@ -64,6 +70,13 @@ kept for reference — it is not used at runtime).
   directly.
 - A missing page (an old link to a tournament since removed, a mistyped
   district) gets a 404 page in the site's layout, not FastAPI's JSON.
+- Each tournament page also carries its details as schema.org `Event` data
+  (`event_schema` in `app/view.py`), which search engines use to list it
+  with its date and venue. Tournaments in the `Nacional` district are left
+  out until their venue is announced.
+- "Today" (what counts as upcoming, the "Hoje" tag, "daqui a 8 dias") is
+  Lisbon's date, not the server's: the container runs on UTC, which in
+  summer is an hour behind.
 
 ## Security notes
 
@@ -250,6 +263,11 @@ The real AXDB (Associação de Xadrez do Distrito de Braga) emblem lives at
 favicon). To swap it for a different file, drop the new image in `static/`
 and update both the `<link rel="icon" ...>` and `<img src="/static/logo...">`
 lines in `templates/base.html`.
+
+The logo is also on the share card, `static/og-image.png`: the image shown
+with a link to the site in WhatsApp, Telegram and the like. It is made from
+`scripts/og-image.html`, which says at the top how to redo it after swapping
+the logo or changing the name.
 
 ## Project layout
 

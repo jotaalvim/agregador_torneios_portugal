@@ -59,4 +59,4 @@ def get_csrf_token(request: Request) -> str:
 def verify_csrf(request: Request, token: str) -> None:
     expected = request.session.get("csrf")
     if not expected or not secrets.compare_digest(token, expected):
-        raise HTTPException(status_code=400, detail="Sessao invalida, tenta novamente.")
+        raise HTTPException(status_code=400, detail="Sessão inválida, tenta novamente.")

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{% if correction is defined %}Rever correcao{% else %}Editar torneio{% endif %} | Torneios Xadrez Portugal{% endblock %}
+{% block title %}{% if correction is defined %}Rever correção{% else %}Editar torneio{% endif %} | Torneios Xadrez Portugal{% endblock %}
 {% block body_class %}has-admin-nav{% endblock %}
 {% block admin_nav %}{% include "admin/_nav.html" %}{% endblock %}
 {% block content %}
@@ -12,24 +12,24 @@
   {%- if change %}
   <p class="was">Valor atual: {{ change.current_display }}</p>
   {%- if change.stale %}
-  <p class="was stale">Este campo mudou depois da sugestao. Quando foi enviada, o valor era: {{ change.old_display }}</p>
+  <p class="was stale">Este campo mudou depois da sugestão. Quando foi enviada, o valor era: {{ change.old_display }}</p>
   {%- endif %}
   {%- endif %}
 {%- endmacro %}
 <div class="narrow">
-<h1>{% if correction is defined %}Rever correcao{% else %}Editar torneio{% endif %}</h1>
+<h1>{% if correction is defined %}Rever correção{% else %}Editar torneio{% endif %}</h1>
 
 {% if correction is defined %}
-<section class="correction-box" aria-label="Correcao enviada por um visitante">
+<section class="correction-box" aria-label="Correção enviada por um visitante">
   <p><strong>Enviada{% if correction.created_at %} a {{ correction.created_at.strftime("%d/%m/%Y") }}{% endif %}</strong>
-    por {{ correction.submitted_by_name or "anonimo" }}{% if correction.submitted_by_email %} &middot; <a href="mailto:{{ correction.submitted_by_email|urlencode }}">{{ correction.submitted_by_email }}</a>{% endif %}</p>
-  {% if not correction_pending %}<p>Esta correcao ja foi tratada ({{ correction.status.value }}). O formulario mostra o torneio como esta agora.</p>{% endif %}
+    por {{ correction.submitted_by_name or "anónimo" }}{% if correction.submitted_by_email %} &middot; <a href="mailto:{{ correction.submitted_by_email|urlencode }}">{{ correction.submitted_by_email }}</a>{% endif %}</p>
+  {% if not correction_pending %}<p>Esta correção já foi tratada ({{ correction.status.value }}). O formulário mostra o torneio como está agora.</p>{% endif %}
   {% if correction.cancelled %}<p class="change-flag">Diz que o torneio foi cancelado ou adiado.</p>{% endif %}
   {% if correction.note %}<p class="change-note">{{ correction.note }}</p>{% endif %}
   {% if correction.source_url %}<p>Fonte: <a href="{{ correction.source_url }}" rel="noopener nofollow">{{ correction.source_url }}</a></p>{% endif %}
-  {% if reviewing and ch %}<p>Os campos sugeridos estao assinalados. Guardar aplica o que ficar no formulario, por isso podes ajustar antes.</p>{% endif %}
-  {% if reviewing and not ch %}<p>Nenhum campo alterado{% if correction.note %}, so a nota{% endif %}. Edita o que for preciso e guarda, ou marca como tratada.</p>{% endif %}
-  {% if reviewing and correction.cancelled %}<p>Nao ha um campo para cancelamentos: se foi adiado, muda a data; se foi cancelado, muda o estado para rejected para o tirar do site.</p>{% endif %}
+  {% if reviewing and ch %}<p>Os campos sugeridos estão assinalados. Guardar aplica o que ficar no formulário, por isso podes ajustar antes.</p>{% endif %}
+  {% if reviewing and not ch %}<p>Nenhum campo alterado{% if correction.note %}, só a nota{% endif %}. Edita o que for preciso e guarda, ou marca como tratada.</p>{% endif %}
+  {% if reviewing and correction.cancelled %}<p>Não há um campo para cancelamentos: se foi adiado, muda a data; se foi cancelado, muda o estado para rejected para o tirar do site.</p>{% endif %}
 </section>
 {% endif %}
 
@@ -86,7 +86,7 @@
   </div>
 
   <div class="field field-half{% if ch.organizer %} is-changed{% endif %}">
-    <label for="organizer">Organizacao</label>
+    <label for="organizer">Organização</label>
     <input type="text" id="organizer" name="organizer" value="{{ values.organizer }}">
     {{ was(ch.organizer) }}
     {% if errors.organizer %}<p class="error">{{ errors.organizer }}</p>{% endif %}
@@ -107,7 +107,7 @@
   </div>
 
   <div class="field field-half{% if ch.registration_url %} is-changed{% endif %}">
-    <label for="registration_url">Link de inscricao</label>
+    <label for="registration_url">Link de inscrição</label>
     <input type="url" id="registration_url" name="registration_url" value="{{ values.registration_url }}">
     {{ was(ch.registration_url) }}
     {% if errors.registration_url %}<p class="error">{{ errors.registration_url }}</p>{% endif %}
@@ -121,7 +121,7 @@
   </div>
 
   <div class="field{% if ch.description %} is-changed{% endif %}">
-    <label for="description">Descricao</label>
+    <label for="description">Descrição</label>
     <textarea id="description" name="description" rows="4">{{ values.description }}</textarea>
     {{ was(ch.description) }}
     {% if errors.description %}<p class="error">{{ errors.description }}</p>{% endif %}
@@ -142,13 +142,13 @@
 
 {% if reviewing %}
 <div class="correction-actions">
-  <form method="post" action="/admin/correcoes/{{ correction.id }}/resolve" class="inline" onsubmit="return confirm('Fechar esta correcao sem alterar o torneio?');">
+  <form method="post" action="/admin/correcoes/{{ correction.id }}/resolve" class="inline" onsubmit="return confirm('Fechar esta correção sem alterar o torneio?');">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <button type="submit" class="link-btn">Marcar como tratada sem guardar</button>
   </form>
-  <form method="post" action="/admin/correcoes/{{ correction.id }}/reject" class="inline" onsubmit="return confirm('Rejeitar esta correcao?');">
+  <form method="post" action="/admin/correcoes/{{ correction.id }}/reject" class="inline" onsubmit="return confirm('Rejeitar esta correção?');">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <button type="submit" class="link-btn reject">Rejeitar sugestao</button>
+    <button type="submit" class="link-btn reject">Rejeitar sugestão</button>
   </form>
 </div>
 {% endif %}

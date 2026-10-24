@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Calendario | Torneios Xadrez Portugal{% endblock %}
-{% block og_title %}Calendario de torneios{% endblock %}
-{% block description %}Vista anual do calendario de torneios de xadrez no Norte de Portugal, mes a mes.{% endblock %}
+{% block title %}Calendário | Torneios Xadrez Portugal{% endblock %}
+{% block og_title %}Calendário de torneios{% endblock %}
+{% block description %}Vista anual do calendário de torneios de xadrez em Portugal, mês a mês.{% endblock %}
 {% block content %}
 <div class="page-head">
-  <h1>Calendario</h1>
+  <h1>Calendário</h1>
   {% include "_view_toggle.html" %}
 </div>
 
@@ -26,7 +26,7 @@
 </details>
 {% endif %}
 
-<p class="page-actions"><a href="{{ filters.feed_url }}">Subscrever calendario (.ics)</a></p>
+<p class="page-actions"><a href="{{ filters.feed_url }}">Subscrever calendário (.ics)</a></p>
 
 <script>
   (function () {

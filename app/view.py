@@ -3,8 +3,9 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass, replace
-from datetime import date
+from datetime import date, datetime, timedelta
 from urllib.parse import urlencode
+from zoneinfo import ZoneInfo
 
 from markupsafe import Markup, escape
 
@@ -12,11 +13,20 @@ from .models import Correction, CorrectionStatus, Tournament
 from .utils import deaccent, slugify
 
 MONTH_NAMES_PT = [
-    "JANEIRO", "FEVEREIRO", "MARCO", "ABRIL", "MAIO", "JUNHO",
+    "JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO",
     "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO",
 ]
 # Indexed by date.weekday() (Monday = 0), for the date tile in the list.
-WEEKDAYS_PT = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"]
+WEEKDAYS_PT = ["SEG", "TER", "QUA", "QUI", "SEX", "SÁB", "DOM"]
+WEEKDAYS_LONG_PT = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
+
+# The site's day is mainland Portugal's. The server runs on UTC, which in
+# summer is still yesterday for the first hour after midnight in Lisbon.
+LISBON = ZoneInfo("Europe/Lisbon")
+
+
+def today_in_lisbon() -> date:
+    return datetime.now(LISBON).date()
 
 # Colour slot per district, used by the calendar grid (see --district-N in
 # style.css). The mapping is by slug and deliberately fixed: a district keeps
@@ -91,12 +101,12 @@ def time_control_html(text: str) -> Markup:
 
 
 # The ritmo filter's choices: time controls grouped the way Portuguese chess
-# names them, slowest first as in SCRAPING.md's table. "Rapidas" is blitz, not
+# names them, slowest first as in SCRAPING.md's table. "Rápidas" is blitz, not
 # rapid, so each chip also shows the usual time control of its group (`hint`).
 RITMOS = {
-    "classicas": {"label": "Classicas", "hint": "90+30"},
-    "semi-rapidas": {"label": "Semi-rapidas", "hint": "10+5"},
-    "rapidas": {"label": "Rapidas", "hint": "3+2"},
+    "classicas": {"label": "Clássicas", "hint": "90+30"},
+    "semi-rapidas": {"label": "Semi-rápidas", "hint": "10+5"},
+    "rapidas": {"label": "Rápidas", "hint": "3+2"},
 }
 
 # The first base + increment in a time control: "90 + 30", or as organizers
@@ -139,6 +149,83 @@ def share_text(t: Tournament, page_url: str | None = None) -> str:
     return "\n\n".join(lines)
 
 
+def event_schema(t: Tournament, page_url: str, image_url: str) -> dict | None:
+    """The tournament as a schema.org Event, which search engines read to show
+    it with its date and venue in their event results. None while the venue is
+    not announced (the "Nacional" district, see SCRAPING.md): an event without
+    a place is rejected anyway."""
+    if slugify(t.district) == "nacional":
+        return None
+    event = {
+        "@context": "https://schema.org",
+        "@type": "Event",
+        "name": t.title,
+        "startDate": t.date.isoformat(),
+        "eventStatus": "https://schema.org/EventScheduled",
+        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+        "location": {
+            "@type": "Place",
+            "name": t.location,
+            "address": {"@type": "PostalAddress", "streetAddress": t.location,
+                        "addressRegion": t.district, "addressCountry": "PT"},
+        },
+        "description": t.description or f"Torneio de xadrez, ritmo {t.time_control}.",
+        "image": [image_url],
+        "url": page_url,
+    }
+    if t.organizer:
+        event["organizer"] = {"@type": "Organization", "name": t.organizer}
+    return event
+
+
+def ritmo_line(t: Tournament) -> str:
+    """The ritmo with its group, for calendar apps: "Ritmo: 90 + 30 (Clássicas)"."""
+    group = ritmo_of(t.time_control)
+    return f"Ritmo: {t.time_control}" + (f" ({RITMOS[group]['label']})" if group else "")
+
+
+def calendar_details(t: Tournament, page_url: str) -> str:
+    """The notes of the tournament's event in a calendar app: ritmo and
+    organizer, the organizer's own description, then the links a player needs
+    from there."""
+    lines = [ritmo_line(t)]
+    if t.organizer:
+        lines.append(f"Organização: {t.organizer}")
+    if t.description:
+        lines += ["", t.description]
+    lines.append("")
+    if t.registration_url:
+        lines.append(f"Inscrição: {t.registration_url}")
+    if t.regulation_url:
+        lines.append(f"Regulamento: {t.regulation_url}")
+    lines.append(f"Página do torneio: {page_url}")
+    return "\n".join(lines)
+
+
+def google_calendar_url(t: Tournament, page_url: str) -> str:
+    """Google Calendar's new-event page with the tournament filled in, for
+    phones where downloading an .ics opens no calendar (Android, mostly). An
+    all-day event, so the end date is the day after. The notes stay short,
+    since they travel in the URL: the tournament's page has the rest."""
+    return "https://calendar.google.com/calendar/render?" + urlencode({
+        "action": "TEMPLATE",
+        "text": t.title,
+        "dates": f"{t.date:%Y%m%d}/{t.date + timedelta(days=1):%Y%m%d}",
+        "location": t.location,
+        "details": f"{ritmo_line(t)}\n{page_url}",
+    })
+
+
+def countdown(day: date, today: date) -> str:
+    """How soon an upcoming tournament is, for the next month or so: "amanhã",
+    "daqui a 8 dias". Empty further off, when the date says enough, and from
+    the day itself on, when the page says it is on today or has finished."""
+    days = (day - today).days
+    if days == 1:
+        return "amanhã"
+    return f"daqui a {days} dias" if 1 < days <= 31 else ""
+
+
 def row(t: Tournament, today: date, page_url: str | None = None) -> dict:
     return {
         "id": t.id,
@@ -149,6 +236,7 @@ def row(t: Tournament, today: date, page_url: str | None = None) -> dict:
         "location": t.location,
         "time_control": t.time_control,
         "time_control_html": time_control_html(t.time_control),
+        "ritmo": ritmo_of(t.time_control),
         "organizer": t.organizer,
         "chess_results_url": t.chess_results_url,
         "regulation_url": t.regulation_url,
@@ -157,6 +245,9 @@ def row(t: Tournament, today: date, page_url: str | None = None) -> dict:
         "description": t.description,
         "date": t.date.isoformat(),
         "date_fmt": t.date.strftime("%d/%m/%Y"),
+        "date_long": f"{WEEKDAYS_LONG_PT[t.date.weekday()].capitalize()}, {t.date.day} de "
+                     f"{MONTH_NAMES_PT[t.date.month - 1].lower()} de {t.date.year}",
+        "countdown": countdown(t.date, today),
         "day": t.date.day,
         "weekday_short": WEEKDAYS_PT[t.date.weekday()],
         "month_short": MONTH_NAMES_PT[t.date.month - 1][:3],
@@ -258,7 +349,7 @@ class Filters:
 
     @property
     def of_ritmo(self) -> str:
-        """The ritmo as the empty-list messages put it, " de classicas", or ""."""
+        """The ritmo as the empty-list messages put it, " de clássicas", or ""."""
         return f" de {RITMOS[self.ritmo]['label'].lower()}" if self.ritmo else ""
 
 
@@ -301,12 +392,12 @@ FIELD_LABELS = {
     "date": "Data",
     "location": "Local",
     "time_control": "Ritmo de jogo",
-    "organizer": "Organizacao",
+    "organizer": "Organização",
     "chess_results_url": "Link chess-results.com",
     "regulation_url": "Link do regulamento",
-    "registration_url": "Link de inscricao",
+    "registration_url": "Link de inscrição",
     "link": "Site do torneio",
-    "description": "Descricao",
+    "description": "Descrição",
 }
 MULTILINE_FIELDS = {"description"}
 

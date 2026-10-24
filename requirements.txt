@@ -11,3 +11,6 @@ markupsafe>=2.0
 python-multipart>=0.0.9
 sqlalchemy>=2.0,<3.0
 itsdangerous>=2.2
+# Time zone data for zoneinfo, which the site's "today" (Lisbon's) needs: used
+# only if the image's OS has no zone database of its own.
+tzdata>=2024.1

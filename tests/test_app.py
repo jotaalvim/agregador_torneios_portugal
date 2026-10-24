@@ -1,9 +1,13 @@
+import json
 import re
+from datetime import date
 
 import pytest
 from fastapi.testclient import TestClient
 
+from app.database import SessionLocal
 from app.main import app
+from app.models import Status, Tournament
 
 ADMIN = {"username": "testadmin", "password": "testpass"}
 
@@ -50,7 +54,7 @@ def test_search_filters_results(client):
 
 def test_search_no_results_message(client):
     r = client.get("/", params={"q": "torneio-que-nao-existe"})
-    assert "Sem torneios proximos" in r.text
+    assert "Sem torneios próximos" in r.text
 
 
 SEED_BY_RITMO = {
@@ -95,7 +99,49 @@ def test_ritmo_is_kept_by_links_and_search(client):
 
 def test_ritmo_filter_no_results_message(client):
     r = client.get("/distrito/viana-do-castelo", params={"ritmo": "classicas"})
-    assert "Sem torneios de classicas agendados neste distrito." in r.text
+    assert "Sem torneios de clássicas agendados neste distrito." in r.text
+
+
+def event_data(page: str) -> dict:
+    return json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>', page, flags=re.S).group(1))
+
+
+def test_tournament_page_has_event_data_ritmo_and_share_card(client):
+    tid = re.search(r'href="/torneios/(\d+)">Open de Outono do Porto</a>', client.get("/").text).group(1)
+    page = client.get(f"/torneios/{tid}").text
+    event = event_data(page)
+    assert (event["@type"], event["name"], event["startDate"]) == ("Event", "Open de Outono do Porto", "2026-11-08")
+    assert event["url"].endswith(f"/torneios/{tid}")
+    assert 'class="tag tag-ritmo" href="/?ritmo=classicas">Clássicas</a>' in page
+    assert re.search(r'<meta property="og:image" content="https?://[^"]+/static/og-image\.png">', page)
+    assert client.get("/static/og-image.png").headers["content-type"] == "image/png"
+    assert 'href="https://calendar.google.com/calendar/render?action=TEMPLATE' in page
+
+
+def test_calendar_feed_names_itself_and_links_back(client):
+    feed = client.get("/calendario.ics", params={"distrito": "braga", "ritmo": "classicas"}).text
+    assert all(len(line.encode("utf-8")) <= 75 for line in feed.split("\r\n"))
+    feed = feed.replace("\r\n ", "")  # unfolded, as calendar apps read it
+    assert "X-WR-CALNAME:Torneios Xadrez Portugal · Braga · Clássicas" in feed
+    event = next(e for e in feed.split("BEGIN:VEVENT") if "SUMMARY:II Open Internacional de Braga" in e)
+    assert r"Ritmo: 90' + 30''/lance\, 9 rondas (Clássicas)" in event
+    assert re.search(r"URL:https?://\S+/torneios/\d+\r\n", event)
+
+    single = client.get(re.search(r"URL:https?://[^/]+(/torneios/\d+)", event).group(1) + "/ics").text
+    assert "X-WR-CALNAME" not in single  # a one-off download, not a subscription
+
+
+def test_event_data_cannot_close_its_script_tag(client):
+    title = "Open </script><script>alert(1)</script>"
+    with SessionLocal() as db:
+        t = Tournament(title=title, district="Braga", date=date(2027, 6, 1), location="Sala, Braga",
+                       time_control="90 + 30", status=Status.approved)
+        db.add(t)
+        db.commit()
+        tid = t.id
+    page = client.get(f"/torneios/{tid}").text
+    assert "<script>alert(1)" not in page
+    assert event_data(page)["name"] == title
 
 
 def test_district_page_404_for_unknown_slug(client):
@@ -108,7 +154,7 @@ def test_missing_pages_get_the_site_layout(client, url):
     r = client.get(url)
     assert r.status_code == 404
     assert r.headers["content-type"].startswith("text/html")
-    assert "Pagina nao encontrada" in r.text
+    assert "Página não encontrada" in r.text
     assert 'href="/calendario"' in r.text  # the masthead, so there is a way on
 
 
@@ -121,14 +167,14 @@ def test_admin_requires_login(client):
 def test_admin_login_wrong_password(client):
     r = client.post("/admin/login", data={"username": "testadmin", "password": "wrong"})
     assert r.status_code == 400
-    assert "Credenciais invalidas" in r.text
+    assert "Credenciais inválidas" in r.text
 
 
 def test_admin_login_success_and_dashboard(client):
     login(client)
     r = client.get("/admin")
     assert r.status_code == 200
-    assert "Administracao" in r.text
+    assert "Administração" in r.text
 
 
 def test_admin_action_rejects_bad_csrf(client):
@@ -140,7 +186,7 @@ def test_admin_action_rejects_bad_csrf(client):
 def test_submit_validation_errors(client):
     r = client.post("/submeter", data={"title": ""})
     assert r.status_code == 400
-    assert "Campo obrigatorio" in r.text
+    assert "Campo obrigatório" in r.text
 
 
 def test_submit_honeypot_is_silently_ignored(client):
@@ -243,4 +289,4 @@ def test_admin_new_validation_errors(client):
         data={"csrf_token": new_tournament_csrf_token(client), "title": ""},
     )
     assert r.status_code == 400
-    assert "Campo obrigatorio" in r.text
+    assert "Campo obrigatório" in r.text

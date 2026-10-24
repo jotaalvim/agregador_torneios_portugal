@@ -53,7 +53,7 @@
   </div>
 
   <div class="field field-half">
-    <label for="organizer">Organizacao</label>
+    <label for="organizer">Organização</label>
     <input type="text" id="organizer" name="organizer" value="{{ values.organizer or '' }}">
     {% if errors.organizer %}<p class="error">{{ errors.organizer }}</p>{% endif %}
   </div>
@@ -71,7 +71,7 @@
   </div>
 
   <div class="field field-half">
-    <label for="registration_url">Link de inscricao</label>
+    <label for="registration_url">Link de inscrição</label>
     <input type="url" id="registration_url" name="registration_url" placeholder="https://..." value="{{ values.registration_url or '' }}">
     {% if errors.registration_url %}<p class="error">{{ errors.registration_url }}</p>{% endif %}
   </div>
@@ -83,7 +83,7 @@
   </div>
 
   <div class="field">
-    <label for="description">Descricao</label>
+    <label for="description">Descrição</label>
     <textarea id="description" name="description" rows="4">{{ values.description or '' }}</textarea>
     {% if errors.description %}<p class="error">{{ errors.description }}</p>{% endif %}
   </div>

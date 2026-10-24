@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<!-- The share card, static/og-image.png: the image WhatsApp, Telegram and the
+     like show with a link to the site. Redo it after changing the logo or the
+     name, from the repository root:
+       chrome --headless --window-size=1200,630 --screenshot=static/og-image.png scripts/og-image.html
+     ("chrome" being your Chrome or Chromium binary). -->
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: "Barlow Condensed"; font-weight: 600; src: url("../static/fonts/barlow-condensed-latin-600-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Barlow Condensed"; font-weight: 700; src: url("../static/fonts/barlow-condensed-latin-700-normal.woff2") format("woff2"); }
+  html, body { margin: 0; }
+  body {
+    width: 1200px;
+    height: 630px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 64px;
+    padding: 0 84px;
+    background: #1e3a8a;
+    color: #ffffff;
+    font-family: "Barlow Condensed", sans-serif;
+  }
+  .emblem {
+    flex: 0 0 auto;
+    width: 330px;
+    height: 330px;
+    border-radius: 50%;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, .18);
+  }
+  .emblem img { width: 74%; height: auto; }
+  .text { flex: 1; min-width: 0; }
+  h1 { margin: 0; font-size: 104px; font-weight: 700; line-height: .98; letter-spacing: -.5px; white-space: nowrap; }
+  h1 span { color: #a9c4ff; }
+  .sub { margin: 26px 0 0; font-size: 46px; font-weight: 600; color: #dbe4ff; }
+  .ritmos { margin: 14px 0 0; font-size: 36px; font-weight: 600; color: #a9c4ff; letter-spacing: .5px; }
+  .domain { position: absolute; right: 84px; bottom: 40px; font-size: 30px; font-weight: 600; color: #a9c4ff; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+  <div class="emblem"><img src="../static/logo.jpg" alt=""></div>
+  <div class="text">
+    <h1>Torneios Xadrez<br><span>Portugal</span></h1>
+    <p class="sub">Calendário de torneios de xadrez</p>
+    <p class="ritmos">Clássicas · Semi-rápidas · Rápidas</p>
+  </div>
+  <div class="domain">torneiosdexadrez.pt</div>
+</body>
+</html>

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Torneios: {{ district }} | Torneios Xadrez Portugal{% endblock %}
 {% block og_title %}Torneios de xadrez: {{ district }}{% endblock %}
-{% block description %}Calendario de torneios de xadrez no distrito de {{ district }}, Norte de Portugal.{% endblock %}
+{% block description %}Calendário de torneios de xadrez no distrito de {{ district }}: clássicas, semi-rápidas e rápidas.{% endblock %}
 {% block content %}
 <div class="page-head">
   <h1>{{ district }}</h1>
@@ -17,11 +17,11 @@
 
 {% include "_filters.html" %}
 
-<h2 class="section-title">Proximos{% if upcoming %} <span class="count">({{ upcoming|length }})</span>{% endif %}</h2>
+<h2 class="section-title">Próximos{% if upcoming %} <span class="count">({{ upcoming|length }})</span>{% endif %}</h2>
 {% if upcoming %}
 {% with rows = upcoming %}{% include "_tournament_list.html" %}{% endwith %}
 {% elif filters.q %}
-<p class="empty">Sem torneios{{ filters.of_ritmo }} proximos para &ldquo;{{ filters.q }}&rdquo;.</p>
+<p class="empty">Sem torneios{{ filters.of_ritmo }} próximos para &ldquo;{{ filters.q }}&rdquo;.</p>
 {% else %}
 <p class="empty">Sem torneios{{ filters.of_ritmo }} agendados neste distrito.</p>
 {% endif %}
@@ -33,5 +33,5 @@
 </details>
 {% endif %}
 
-<p class="page-actions"><a href="{{ filters.feed_url }}">Subscrever calendario (.ics)</a></p>
+<p class="page-actions"><a href="{{ filters.feed_url }}">Subscrever calendário (.ics)</a></p>
 {% endblock %}

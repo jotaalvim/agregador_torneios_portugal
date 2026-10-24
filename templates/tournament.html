@@ -2,6 +2,9 @@
 {% block title %}{{ t.title }} | Torneios Xadrez Portugal{% endblock %}
 {% block og_title %}{{ t.title }}{% endblock %}
 {% block description %}{{ t.title }} &mdash; {{ t.date_fmt }}, {{ t.location }} ({{ t.district }}). Ritmo: {{ t.time_control }}.{% endblock %}
+{# For search engines' event results (view.event_schema). tojson escapes <, >
+   and &, so typed text cannot close the script tag. #}
+{% block head_extra %}{% if event %}<script type="application/ld+json">{{ event|tojson }}</script>{% endif %}{% endblock %}
 {% block content %}
 <article class="detail{% if t.finished %} is-finished{% endif %}{% if t.is_today %} is-today{% endif %}">
   <a class="back-link" href="/">&larr; Todos os torneios</a>
@@ -9,7 +12,7 @@
   <header class="detail-head">
     <p class="detail-date">
       <time datetime="{{ t.date }}">{{ t.weekday_short }} {{ t.day }} {{ t.month_short }} {{ t.date[:4] }}</time>
-      {% if t.finished %}<span class="banner">Este torneio ja terminou.</span>{% endif %}
+      {% if t.finished %}<span class="banner">Este torneio já terminou.</span>{% endif %}
       {% if t.is_today %}<span class="banner banner-live">A decorrer hoje.</span>{% endif %}
     </p>
     <h1>{{ t.title }}</h1>
@@ -19,11 +22,12 @@
   <div class="detail-grid">
     <div class="detail-main">
       <dl class="meta">
-        <dt>Data</dt>          <dd><time datetime="{{ t.date }}">{{ t.date_fmt }}</time></dd>
+        <dt>Data</dt>          <dd><time datetime="{{ t.date }}">{{ t.date_long }}</time>{% if t.countdown %}<span class="countdown">{{ t.countdown }}</span>{% endif %}</dd>
         <dt>Distrito</dt>      <dd><a href="/distrito/{{ t.district_slug }}">{{ t.district }}</a></dd>
         <dt>Local</dt>         <dd>{{ t.location }}</dd>
-        <dt>Ritmo de jogo</dt> <dd class="tc">{{ t.time_control_html }}</dd>
-        {% if t.organizer %}<dt>Organizacao</dt><dd>{{ t.organizer }}</dd>{% endif %}
+        {# The group links to the list filtered by it: more tournaments like this one. #}
+        <dt>Ritmo de jogo</dt> <dd class="tc">{{ t.time_control_html }}{% if t.ritmo %}<a class="tag tag-ritmo" href="{{ filters.url(ritmo=t.ritmo) }}">{{ ritmos[t.ritmo].label }}</a>{% endif %}</dd>
+        {% if t.organizer %}<dt>Organização</dt><dd>{{ t.organizer }}</dd>{% endif %}
       </dl>
       {% if t.description %}<div class="detail-desc"><p>{{ t.description }}</p></div>{% endif %}
     </div>
@@ -31,22 +35,23 @@
     <aside class="detail-actions" aria-label="Links">
       {# Registration is the one thing to do before an upcoming tournament, so
          it leads; once the tournament is over it is just another link. #}
-      {% if t.registration_url and not t.finished %}<a class="btn" href="{{ t.registration_url }}" rel="noopener">Inscricao</a>{% endif %}
+      {% if t.registration_url and not t.finished %}<a class="btn" href="{{ t.registration_url }}" rel="noopener">Inscrição</a>{% endif %}
       <ul class="detail-links">
-        {% if t.registration_url and t.finished %}<li><a href="{{ t.registration_url }}" rel="noopener">Inscricao</a></li>{% endif %}
+        {% if t.registration_url and t.finished %}<li><a href="{{ t.registration_url }}" rel="noopener">Inscrição</a></li>{% endif %}
         {% if t.regulation_url %}<li><a href="{{ t.regulation_url }}" rel="noopener">Regulamento</a></li>{% endif %}
         {% if t.chess_results_url %}<li><a href="{{ t.chess_results_url }}" rel="noopener">chess-results.com</a></li>{% endif %}
-        {% if t.link %}<li><a href="{{ t.link }}" rel="noopener">Pagina oficial</a></li>{% endif %}
-        <li><a href="/torneios/{{ t.id }}/ics">Adicionar ao calendario (.ics)</a></li>
+        {% if t.link %}<li><a href="{{ t.link }}" rel="noopener">Página oficial</a></li>{% endif %}
+        <li><a href="{{ google_calendar_url }}" rel="noopener">Adicionar ao Google Calendar</a></li>
+        <li><a href="/torneios/{{ t.id }}/ics">Adicionar ao calendário (.ics)</a></li>
         <li><button type="button" class="link-btn btn-share" data-share-text="{{ t.share_text }}" data-share-title="{{ t.title }}"><span class="btn-label">Partilhar</span></button></li>
-        <li><a href="/torneios/{{ t.id }}/corrigir">Corrigir ou acrescentar informacao</a></li>
+        <li><a href="/torneios/{{ t.id }}/corrigir">Corrigir ou acrescentar informação</a></li>
       </ul>
     </aside>
   </div>
 
   <div class="section-head">
-    <h2>Calendario: {{ t.district }}</h2>
-    <a href="/calendario?distrito={{ t.district_slug }}">Abrir no calendario</a>
+    <h2>Calendário: {{ t.district }}</h2>
+    <a href="/calendario?distrito={{ t.district_slug }}">Abrir no calendário</a>
   </div>
   {% include "_calendar_grid.html" %}
 </article>

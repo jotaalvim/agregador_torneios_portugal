@@ -3,12 +3,12 @@
 {% block content %}
 <div class="narrow">
 <h1>Adicionar torneio</h1>
-<p class="notice">As submissoes sao revistas por um administrador antes de aparecerem no site.</p>
+<p class="notice">As submissões são revistas por um administrador antes de aparecerem no site.</p>
 {% if errors.general %}<p class="error">{{ errors.general }}</p>{% endif %}
 
 <form method="post" action="/submeter" class="form" novalidate>
   <div class="honeypot" aria-hidden="true">
-    <label for="confirmacao">Nao preencher</label>
+    <label for="confirmacao">Não preencher</label>
     <input type="text" id="confirmacao" name="confirmacao" tabindex="-1" autocomplete="off">
   </div>
 
@@ -46,7 +46,7 @@
   </div>
 
   <div class="field field-half">
-    <label for="organizer">Organizacao</label>
+    <label for="organizer">Organização</label>
     <input type="text" id="organizer" name="organizer" value="{{ values.organizer or '' }}">
     {% if errors.organizer %}<p class="error">{{ errors.organizer }}</p>{% endif %}
   </div>
@@ -64,7 +64,7 @@
   </div>
 
   <div class="field field-half">
-    <label for="registration_url">Link de inscricao</label>
+    <label for="registration_url">Link de inscrição</label>
     <input type="url" id="registration_url" name="registration_url" placeholder="https://..." value="{{ values.registration_url or '' }}">
     {% if errors.registration_url %}<p class="error">{{ errors.registration_url }}</p>{% endif %}
   </div>
@@ -76,13 +76,13 @@
   </div>
 
   <div class="field">
-    <label for="description">Descricao</label>
+    <label for="description">Descrição</label>
     <textarea id="description" name="description" rows="4">{{ values.description or '' }}</textarea>
     {% if errors.description %}<p class="error">{{ errors.description }}</p>{% endif %}
   </div>
 
   <fieldset>
-    <legend>Os teus dados (opcional, para o admin poder contactar-te em caso de duvidas)</legend>
+    <legend>Os teus dados (opcional, para o admin poder contactar-te em caso de dúvidas)</legend>
     <div class="field">
       <label for="submitted_by_name">O teu nome</label>
       <input type="text" id="submitted_by_name" name="submitted_by_name" value="{{ values.submitted_by_name or '' }}">

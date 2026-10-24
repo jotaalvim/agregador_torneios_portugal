@@ -218,12 +218,12 @@ def test_a_note_or_the_cancelled_box_is_enough(client):
 
 
 @pytest.mark.parametrize("field,value,message", [
-    ("title", "", "Campo obrigatorio."),
-    ("date", "31/10/2026", "Data invalida."),
-    ("regulation_url", "javascript:alert(1)", "Tem de comecar por http:// ou https://."),
-    ("source_url", "ftp://example.org/x", "Tem de comecar por http:// ou https://."),
-    ("submitted_by_email", "nao-e-um-email", "Email invalido."),
-    ("note", "x" * 2001, "Maximo de 2000 caracteres."),
+    ("title", "", "Campo obrigatório."),
+    ("date", "31/10/2026", "Data inválida."),
+    ("regulation_url", "javascript:alert(1)", "Tem de começar por http:// ou https://."),
+    ("source_url", "ftp://example.org/x", "Tem de começar por http:// ou https://."),
+    ("submitted_by_email", "nao-e-um-email", "Email inválido."),
+    ("note", "x" * 2001, "Máximo de 2000 caracteres."),
 ])
 def test_invalid_input_is_refused_and_kept(client, field, value, message):
     tid = make_tournament()
@@ -321,7 +321,7 @@ def test_reject_and_mark_handled_leave_the_tournament_alone(client):
     assert get_tournament(tid).location == "Sala Antiga, Braga"
 
     handled = client.get(f"/admin/correcoes/{wrong['id']}").text
-    assert "ja foi tratada" in handled
+    assert "já foi tratada" in handled
     assert 'name="correction_id"' not in handled
     assert 'value="Sala Antiga, Braga"' in handled
 
@@ -335,7 +335,7 @@ def test_review_flags_fields_edited_after_the_suggestion(client):
     login(client)
     review = client.get(f"/admin/correcoes/{c['id']}").text
     assert "Valor atual: Sala Intermedia, Braga" in review
-    assert "Este campo mudou depois da sugestao. Quando foi enviada, o valor era: Sala Antiga, Braga" in review
+    assert "Este campo mudou depois da sugestão. Quando foi enviada, o valor era: Sala Antiga, Braga" in review
     assert "(mudou depois)" in dashboard_row(client, c["id"])
 
 
@@ -446,7 +446,7 @@ def test_field_errors_are_summarised_at_the_top(client):
     form = browser_form(client, tid) | {"time_control": "60 + 30", "source_url": "www.fpx.pt/reg.pdf"}
     r = client.post(f"/torneios/{tid}/corrigir", data=form)
     assert r.status_code == 400
-    assert '<p class="error" role="alert">Ha campos por rever mais abaixo: Fonte.</p>' in r.text
+    assert '<p class="error" role="alert">Há campos por rever mais abaixo: Fonte.</p>' in r.text
 
 
 def test_changes_are_stored_as_readable_json(client):
@@ -476,7 +476,7 @@ def test_cancelled_flag_comes_with_guidance(client):
     [c] = corrections_for(tid)
     login(client)
     review = client.get(f"/admin/correcoes/{c['id']}").text
-    assert "Nao ha um campo para cancelamentos" in review
+    assert "Não há um campo para cancelamentos" in review
     assert "so a nota" not in review
 
 
@@ -577,4 +577,4 @@ def test_edit_form_shows_description_errors(client):
     form = form_values(client.get(f"/admin/tournaments/{tid}/edit").text) | {"description": "x" * 5001}
     r = client.post(f"/admin/tournaments/{tid}/edit", data=form)
     assert r.status_code == 400
-    assert "Maximo de 5000 caracteres." in r.text
+    assert "Máximo de 5000 caracteres." in r.text

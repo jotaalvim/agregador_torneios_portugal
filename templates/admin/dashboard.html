@@ -1,16 +1,16 @@
 {% extends "base.html" %}
-{% block title %}Administracao | Torneios Xadrez Portugal{% endblock %}
+{% block title %}Administração | Torneios Xadrez Portugal{% endblock %}
 {% block body_class %}has-admin-nav{% endblock %}
 {% block admin_nav %}{% include "admin/_nav.html" %}{% endblock %}
 {% block content %}
-<h1>Administracao</h1>
+<h1>Administração</h1>
 
 <h2>Pendentes ({{ pending|length }})</h2>
 {% if pending %}
 <div class="table-scroll">
 <table class="data-table">
   <thead>
-    <tr><th>Data</th><th>Torneio</th><th>Distrito</th><th>Submetido por</th><th>Acoes</th></tr>
+    <tr><th>Data</th><th>Torneio</th><th>Distrito</th><th>Submetido por</th><th>Ações</th></tr>
   </thead>
   <tbody>
     {% for t in pending %}
@@ -19,7 +19,7 @@
       <td data-label="Torneio">{{ t.title }}</td>
       <td data-label="Distrito">{{ t.district }}</td>
       <td data-label="Submetido por">{{ t.submitted_by_name or "-" }}{% if t.submitted_by_email %} &middot; {{ t.submitted_by_email }}{% endif %}</td>
-      <td class="actions" data-label="Acoes">
+      <td class="actions" data-label="Ações">
         <a href="/admin/tournaments/{{ t.id }}/edit">editar</a>
         <form method="post" action="/admin/tournaments/{{ t.id }}/approve" class="inline">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
@@ -36,27 +36,27 @@
 </table>
 </div>
 {% else %}
-<p class="empty">Sem submissoes pendentes.</p>
+<p class="empty">Sem submissões pendentes.</p>
 {% endif %}
 
-<h2>Correcoes pendentes ({{ corrections|length }})</h2>
+<h2>Correções pendentes ({{ corrections|length }})</h2>
 {% if corrections %}
 <div class="table-scroll">
 <table class="data-table">
   <thead>
-    <tr><th>Enviada</th><th>Torneio</th><th>Sugestao</th><th>Enviada por</th><th>Acoes</th></tr>
+    <tr><th>Enviada</th><th>Torneio</th><th>Sugestão</th><th>Enviada por</th><th>Ações</th></tr>
   </thead>
   <tbody>
     {% for item in corrections %}{% set c = item.c %}
     <tr>
       <td class="nowrap" data-label="Enviada">{{ c.created_at.strftime("%d/%m/%Y") if c.created_at else "-" }}</td>
       <td data-label="Torneio"><a href="/torneios/{{ item.t.id }}">{{ item.t.title }}</a> <span class="nowrap">&middot; {{ item.t.date.strftime("%d/%m/%Y") }}</span></td>
-      <td data-label="Sugestao">
+      <td data-label="Sugestão">
         {% if c.cancelled %}<p class="change-flag">Cancelado ou adiado</p>{% endif %}
         {% if item.changes %}
         <ul class="change-list">
           {% for ch in item.changes %}
-          <li><strong>{{ ch.label }}:</strong> <del>{{ ch.old_display }}</del> &rarr; <ins>{{ ch.new_display }}</ins>{% if ch.whitespace_only %} <span class="muted-note">(so espacos ou mudancas de linha)</span>{% endif %}{% if ch.stale %} <span class="stale">(mudou depois)</span>{% endif %}</li>
+          <li><strong>{{ ch.label }}:</strong> <del>{{ ch.old_display }}</del> &rarr; <ins>{{ ch.new_display }}</ins>{% if ch.whitespace_only %} <span class="muted-note">(só espaços ou mudanças de linha)</span>{% endif %}{% if ch.stale %} <span class="stale">(mudou depois)</span>{% endif %}</li>
           {% endfor %}
         </ul>
         {% endif %}
@@ -64,9 +64,9 @@
         {% if c.source_url %}<a href="{{ c.source_url }}" rel="noopener nofollow">fonte</a>{% endif %}
       </td>
       <td data-label="Enviada por">{{ c.submitted_by_name or "-" }}{% if c.submitted_by_email %} &middot; {{ c.submitted_by_email }}{% endif %}</td>
-      <td class="actions" data-label="Acoes">
+      <td class="actions" data-label="Ações">
         <a href="/admin/correcoes/{{ c.id }}">rever</a>
-        <form method="post" action="/admin/correcoes/{{ c.id }}/reject" class="inline" onsubmit="return confirm('Rejeitar esta correcao?');">
+        <form method="post" action="/admin/correcoes/{{ c.id }}/reject" class="inline" onsubmit="return confirm('Rejeitar esta correção?');">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <button type="submit" class="link-btn reject">rejeitar</button>
         </form>
@@ -77,14 +77,14 @@
 </table>
 </div>
 {% else %}
-<p class="empty">Sem correcoes pendentes.</p>
+<p class="empty">Sem correções pendentes.</p>
 {% endif %}
 
 <h2>Todos os torneios</h2>
 <div class="table-scroll">
 <table class="data-table">
   <thead>
-    <tr><th>Data</th><th>Torneio</th><th>Distrito</th><th>Estado</th><th>Acoes</th></tr>
+    <tr><th>Data</th><th>Torneio</th><th>Distrito</th><th>Estado</th><th>Ações</th></tr>
   </thead>
   <tbody>
     {% for t in all_tournaments %}
@@ -93,7 +93,7 @@
       <td data-label="Torneio">{{ t.title }}</td>
       <td data-label="Distrito">{{ t.district }}</td>
       <td data-label="Estado"><span class="status status-{{ t.status.value }}">{{ t.status.value }}</span></td>
-      <td class="actions" data-label="Acoes">
+      <td class="actions" data-label="Ações">
         <a href="/admin/tournaments/{{ t.id }}/edit">editar</a>
         <form method="post" action="/admin/tournaments/{{ t.id }}/delete" class="inline" onsubmit="return confirm('Apagar este torneio?');">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

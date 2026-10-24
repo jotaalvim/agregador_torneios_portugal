@@ -618,6 +618,11 @@ dl.meta { display: grid; grid-template-columns: 9.5rem 1fr; margin: 0; }
 dl.meta dt, dl.meta dd { margin: 0; padding: .7rem 0; border-bottom: 1px solid var(--line); }
 dl.meta dt { color: var(--muted); font-size: .92rem; }
 dl.meta dd.tc { font-family: var(--display); font-size: 1.15rem; font-weight: 600; line-height: 1.3; }
+/* How soon it is after the date, and the ritmo's group after the time control
+   (a link to the list filtered by it): both quieter than what they follow. */
+.countdown { margin-left: .6rem; color: var(--muted); font-size: .92rem; }
+.tag-ritmo { color: var(--muted); text-decoration: none; }
+.tag-ritmo:hover, .tag-ritmo:focus-visible { color: var(--link); }
 /* Descriptions are typed into a textarea; keep the author's line breaks. */
 .detail-desc { margin-top: 1.25rem; max-width: 65ch; }
 .detail-desc p { margin: 0; white-space: pre-line; }

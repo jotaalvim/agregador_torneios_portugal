@@ -7,12 +7,19 @@
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0b1120" media="(prefers-color-scheme: dark)">
     <title>{% block title %}Torneios Xadrez Portugal{% endblock %}</title>
-    <meta name="description" content="{% block description %}Torneios de xadrez no Norte de Portugal: Braga, Porto, Viana do Castelo e mais. Calendario atualizado por clubes e associacoes.{% endblock %}">
+    <meta name="description" content="{% block description %}Calendário de torneios de xadrez em Portugal: clássicas, semi-rápidas e rápidas, atualizado por clubes e associações.{% endblock %}">
     <meta property="og:site_name" content="Torneios Xadrez Portugal">
     <meta property="og:type" content="website">
     <meta property="og:title" content="{% block og_title %}Torneios Xadrez Portugal{% endblock %}">
     <meta property="og:description" content="{{ self.description() }}">
     <meta property="og:locale" content="pt_PT">
+    <meta property="og:url" content="{{ request.url }}">
+    {# The picture shown with a shared link (made from scripts/og-image.html). #}
+    <meta property="og:image" content="{{ url_for('static', path='og-image.png') }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Torneios Xadrez Portugal: calendário de torneios de xadrez">
+    <meta name="twitter:card" content="summary_large_image">
     <link rel="icon" href="/static/logo.jpg" type="image/jpeg">
     <link rel="canonical" href="{{ request.url }}">
     {% block head_extra %}{% endblock %}
@@ -20,20 +27,20 @@
        Cache-Control on /static, so browsers may otherwise pair new HTML with
        a heuristically cached old stylesheet for hours. #}
     <link rel="preload" href="/static/fonts/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="/static/css/style.css?v=8">
+    <link rel="stylesheet" href="/static/css/style.css?v=9">
     {% if goatcounter_script_url and goatcounter_endpoint %}
     <script>window.goatcounter = {allow_local: true}</script>
     <script data-goatcounter="{{ goatcounter_endpoint }}" async src="{{ goatcounter_script_url }}"></script>
     {% endif %}
   </head>
   <body class="{% block body_class %}{% endblock %}">
-    <a class="skip-link" href="#conteudo">Saltar para o conteudo</a>
+    <a class="skip-link" href="#conteudo">Saltar para o conteúdo</a>
 
     {% set path = request.url.path %}
     <header class="site-header">
       <div class="wrap site-header-inner">
         <a class="brand" href="/">
-          <img src="/static/logo.jpg" alt="Associacao de Xadrez do Distrito de Braga" class="logo" width="36" height="36">
+          <img src="/static/logo.jpg" alt="Associação de Xadrez do Distrito de Braga" class="logo" width="36" height="36">
           <span class="brand-name">Torneios Xadrez<span class="brand-tail"> Portugal</span></span>
         </a>
         {# Districts are not in here: they are filters on the list and the
@@ -41,7 +48,7 @@
            the filters, doing the same job as the tabs on phones (_view_toggle.html). #}
         <nav class="site-nav" aria-label="Principal">
           <a href="{{ filters.url(view='list') }}" class="nav-link{% if path == '/' or path.startswith('/distrito/') or path.startswith('/torneios/') %} is-active{% endif %}"{% if path == '/' or path.startswith('/distrito/') %} aria-current="page"{% endif %}>Torneios</a>
-          <a href="{{ filters.url(view='calendar') }}" class="nav-link{% if path == '/calendario' %} is-active{% endif %}"{% if path == '/calendario' %} aria-current="page"{% endif %}>Calendario</a>
+          <a href="{{ filters.url(view='calendar') }}" class="nav-link{% if path == '/calendario' %} is-active{% endif %}"{% if path == '/calendario' %} aria-current="page"{% endif %}>Calendário</a>
           <a href="/submeter" class="nav-cta" aria-label="Adicionar torneio">+ Adicionar<span class="nav-cta-extra"> torneio</span></a>
         </nav>
       </div>
@@ -53,11 +60,11 @@
 
     <footer class="site-footer">
       <div class="wrap site-footer-inner">
-        <p>Torneios de xadrez do Norte de Portugal</p>
-        <nav aria-label="Rodape">
-          <a href="/calendario">Calendario</a>
+        <p>Torneios de xadrez em Portugal</p>
+        <nav aria-label="Rodapé">
+          <a href="/calendario">Calendário</a>
           <a href="mailto:joaoalvim179@proton.me">Contacto</a>
-          <a href="/admin/login">Area de administracao</a>
+          <a href="/admin/login">Área de administração</a>
         </nav>
       </div>
     </footer>
