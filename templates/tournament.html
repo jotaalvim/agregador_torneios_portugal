@@ -9,7 +9,7 @@
 <article class="detail{% if t.finished %} is-finished{% endif %}{% if t.is_today %} is-today{% endif %}">
   <a class="back-link" href="/">&larr; Todos os torneios</a>
 
-  <header class="detail-head">
+  <header class="hero detail-head">
     <p class="detail-date">
       <time datetime="{{ t.date }}">{{ t.weekday_short }} {{ t.day }} {{ t.month_short }} {{ t.date[:4] }}</time>
       {% if t.finished %}<span class="banner">Este torneio já terminou.</span>{% endif %}

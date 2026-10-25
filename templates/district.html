@@ -3,21 +3,26 @@
 {% block og_title %}Torneios de xadrez: {{ district }}{% endblock %}
 {% block description %}Calendário de torneios de xadrez no distrito de {{ district }}: clássicas, semi-rápidas e rápidas.{% endblock %}
 {% block content %}
-<div class="page-head">
-  <h1>{{ district }}</h1>
-  {% include "_view_toggle.html" %}
-</div>
+<section class="hero">
+  <div class="hero-head">
+    <div>
+      <p class="hero-kicker">Distrito</p>
+      <h1>{{ district }}</h1>
+    </div>
+    {% include "_view_toggle.html" %}
+  </div>
 
-<form class="search" method="get" action="/distrito/{{ filters.district }}" role="search">
-  <input type="search" name="q" value="{{ filters.q }}" placeholder="Pesquisar por nome, local ou clube&hellip;" aria-label="Pesquisar torneios">
-  {% if filters.ritmo %}<input type="hidden" name="ritmo" value="{{ filters.ritmo }}">{% endif %}
-  <button type="submit">Pesquisar</button>
-  {% if filters.q %}<a class="search-clear" href="{{ filters.url(q='') }}">Limpar</a>{% endif %}
-</form>
+  <form class="search" method="get" action="/distrito/{{ filters.district }}" role="search">
+    <input type="search" name="q" value="{{ filters.q }}" placeholder="Pesquisar por nome, local ou clube&hellip;" aria-label="Pesquisar torneios">
+    {% if filters.ritmo %}<input type="hidden" name="ritmo" value="{{ filters.ritmo }}">{% endif %}
+    <button type="submit">Pesquisar</button>
+    {% if filters.q %}<a class="search-clear" href="{{ filters.url(q='') }}">Limpar</a>{% endif %}
+  </form>
+</section>
 
 {% include "_filters.html" %}
 
-<h2 class="section-title">Próximos{% if upcoming %} <span class="count">({{ upcoming|length }})</span>{% endif %}</h2>
+<h2 class="section-title">Próximos{% if upcoming %} <span class="count">{{ upcoming|length }}</span>{% endif %}</h2>
 {% if upcoming %}
 {% with rows = upcoming %}{% include "_tournament_list.html" %}{% endwith %}
 {% elif filters.q %}
@@ -28,7 +33,7 @@
 
 {% if past %}
 <details class="archive">
-  <summary>Terminados <span class="count">({{ past|length }})</span></summary>
+  <summary>Terminados <span class="count">{{ past|length }}</span></summary>
   {% with rows = past %}{% include "_tournament_list.html" %}{% endwith %}
 </details>
 {% endif %}

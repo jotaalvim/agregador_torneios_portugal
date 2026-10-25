@@ -1,17 +1,20 @@
 {# Shared by every public list. Expects `rows` (view.row dicts), already in
    the order to show them -- upcoming runs forwards, the archive backwards --
    so the month headings simply follow that order. One <tbody> per month, so
-   each heading labels exactly the rows under it. #}
+   each heading labels exactly the rows under it, and each month is one card.
+   The explicit roles are there because the stylesheet lays the table out as
+   blocks and grids, and Safari drops a table's semantics when its display
+   changes. #}
 <div class="listing">
-<table class="tournament-table">
-  <thead class="sr-only">
-    <tr><th scope="col">Data</th><th scope="col">Torneio</th><th scope="col">Ritmo</th><th scope="col">Links</th></tr>
+<table class="tournament-table" role="table">
+  <thead class="sr-only" role="rowgroup">
+    <tr role="row"><th scope="col" role="columnheader">Data</th><th scope="col" role="columnheader">Torneio</th><th scope="col" role="columnheader">Ritmo</th><th scope="col" role="columnheader">Links</th></tr>
   </thead>
   {% for t in rows %}
   {% if loop.changed(t.month_label) %}
   {% if not loop.first %}</tbody>{% endif %}
-  <tbody>
-    <tr class="month-row"><th colspan="4" scope="rowgroup">{{ t.month_label }}</th></tr>
+  <tbody role="rowgroup">
+    <tr class="month-row" role="row"><th colspan="4" scope="rowgroup" role="rowheader">{{ t.month_label }}</th></tr>
   {% endif %}
     {% include "row.html" %}
   {% if loop.last %}</tbody>{% endif %}

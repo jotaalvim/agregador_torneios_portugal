@@ -1,12 +1,13 @@
-<tr class="{% if t.finished %}is-finished{% endif %}{% if t.is_today %} is-today{% endif %}" data-date="{{ t.date }}">
-  <td class="col-date">
-    <time class="fx-date" datetime="{{ t.date }}">
+<tr role="row" class="{% if t.finished %}is-finished{% endif %}{% if t.is_today %} is-today{% endif %}" data-date="{{ t.date }}">
+  <td role="cell" class="col-date">
+    {# Tinted with the district, like this day's circle in the calendar grid. #}
+    <time class="fx-date d-{{ t.district_slot }}" datetime="{{ t.date }}">
       <span class="fx-day" aria-hidden="true">{{ t.day }}</span>
       <span class="fx-wd" aria-hidden="true">{{ t.weekday_short }}</span>
       <span class="sr-only">{{ t.date_fmt }}</span>
     </time>
   </td>
-  <td class="col-title">
+  <td role="cell" class="col-title">
     <a class="t-title" href="/torneios/{{ t.id }}">{{ t.title }}</a>
     {% if t.is_today %}<span class="tag tag-live">Hoje</span>{% endif %}
     {% if t.finished %}<span class="tag tag-done">Terminado</span>{% endif %}
@@ -16,8 +17,11 @@
       <span class="district-dot" aria-hidden="true"></span><span class="t-district">{{ t.district }}</span><span class="t-sep" aria-hidden="true">&middot;</span><span class="t-loc">{{ t.location }}</span>
     </span>
   </td>
-  <td class="col-tc">{{ t.time_control_html }}</td>
-  <td class="col-links">
+  <td role="cell" class="col-tc">
+    <span class="tc">{{ t.time_control_html }}</span>
+    {% if t.ritmo %}<span class="ritmo ritmo-{{ t.ritmo }}">{{ ritmos[t.ritmo].label }}</span>{% endif %}
+  </td>
+  <td role="cell" class="col-links">
     {% if t.chess_results_url %}<a href="{{ t.chess_results_url }}" rel="noopener">chess-results</a>{% endif %}
     {% if t.regulation_url %}<a href="{{ t.regulation_url }}" rel="noopener">regulamento</a>{% endif %}
     {% if t.registration_url %}<a href="{{ t.registration_url }}" rel="noopener">inscrição</a>{% endif %}

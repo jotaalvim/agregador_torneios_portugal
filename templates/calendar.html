@@ -3,16 +3,22 @@
 {% block og_title %}Calendário de torneios{% endblock %}
 {% block description %}Vista anual do calendário de torneios de xadrez em Portugal, mês a mês.{% endblock %}
 {% block content %}
-<div class="page-head">
-  <h1>Calendário</h1>
-  {% include "_view_toggle.html" %}
-</div>
+<section class="hero">
+  <div class="hero-head">
+    <div>
+      <p class="hero-kicker">Xadrez em Portugal</p>
+      <h1>Calendário</h1>
+    </div>
+    {% include "_view_toggle.html" %}
+  </div>
+  <p class="hero-sub">Os próximos doze meses de torneios, num relance.</p>
+</section>
 
 {% include "_filters.html" %}
 
 {% include "_calendar_grid.html" %}
 
-<h2 class="section-title">Lista de torneios{% if upcoming %} <span class="count">({{ upcoming|length }})</span>{% endif %}</h2>
+<h2 class="section-title">Lista de torneios{% if upcoming %} <span class="count">{{ upcoming|length }}</span>{% endif %}</h2>
 {% if upcoming %}
 {% with rows = upcoming %}{% include "_tournament_list.html" %}{% endwith %}
 {% else %}
@@ -21,7 +27,7 @@
 
 {% if past %}
 <details class="archive">
-  <summary>Terminados <span class="count">({{ past|length }})</span></summary>
+  <summary>Terminados <span class="count">{{ past|length }}</span></summary>
   {% with rows = past %}{% include "_tournament_list.html" %}{% endwith %}
 </details>
 {% endif %}
