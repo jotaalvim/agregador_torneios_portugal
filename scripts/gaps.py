@@ -40,19 +40,66 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_SITE = "https://torneiosdexadrez.pt"
 SIMILARITY = 0.80
 
+# Words that say what kind of tournament it is, not which one. Sharing one of
+# them on the same day proves nothing: "46º Dia Xadrez Fábrica da Pólvora de
+# Barcarena" was taken for the Figueira da Foz festival over "xadrez" alone.
+GENERIC = {"xadrez", "chess", "internacional", "international", "aberto", "nacional",
+           "distrital", "regional", "individual", "absoluto", "equipas", "jovens", "jovem",
+           "veteranos", "feminino", "partidas", "rapidas", "semirrapidas", "classicas",
+           "blitz", "rapid", "taca", "festival"}
+# Age groups ("U08", "S65", "V50", "Sub12"): FIDE registers one event per group.
+AGE_GROUP = re.compile(r"(?:u|s|v|sub)\d+")
+
 
 def normalize(value: str) -> str:
     value = unicodedata.normalize("NFKD", (value or "").lower())
     return "".join(c for c in value if c.isalnum())
 
 
+def flatten(value: str) -> str:
+    """Lowercase, accents removed. NFKD alone leaves them as separate
+    characters, and \\w+ would then cut "rápidas" into "ra" and "pidas"."""
+    value = unicodedata.normalize("NFKD", (value or "").lower())
+    return "".join(c for c in value if not unicodedata.combining(c))
+
+
 def significant(value: str) -> set[str]:
     """Content words of a title, for the similarity fallback."""
     stop = {"de", "do", "da", "dos", "das", "e", "o", "a", "os", "as", "em",
-            "por", "no", "na", "torneio", "open", "campeonato", "cd", "cn"}
-    words = re.findall(r"\w+", unicodedata.normalize("NFKD", (value or "").lower()))
+            "por", "no", "na", "torneio", "open", "campeonato", "cd", "cn", "sub"}
+    # The FPX writes "Semi-Rápidas", the site "Semirrápidas".
+    words = re.findall(r"\w+", re.sub(r"semi\W?r?rapidas", "semirrapidas", flatten(value)))
     words = ["".join(c for c in w if c.isalnum()) for w in words]
-    return {w for w in words if w and w not in stop and not w.isdigit()}
+    return {w for w in words if w and w not in stop and not w.isdigit() and not AGE_GROUP.fullmatch(w)}
+
+
+def kind(value: str) -> tuple[str | None, bool]:
+    """(ritmo, team event?) as far as a title says.
+
+    The championships of each ritmo, and the individual and team editions,
+    often share a day and almost the whole title ("Campeonato Nacional
+    Feminino de Rápidas" / "... de Partidas Semi-Rápidas"), so similarity
+    alone takes one for the other.
+    """
+    flat = flatten(value)
+    if re.search(r"semi\W?r?rapid|\brapid\b", flat):  # English "rapid" is semi-rápidas
+        ritmo = "semirrapidas"
+    elif re.search(r"\brapidas\b|\bblitz\b", flat):
+        ritmo = "rapidas"
+    elif re.search(r"\bclassicas\b", flat):
+        ritmo = "classicas"
+    elif re.search(r"\b960\b|fischer", flat):
+        ritmo = "960"
+    else:
+        ritmo = None
+    return ritmo, bool(re.search(r"\bequipas?\b|\bteams?\b", flat))
+
+
+def same_kind(a: str, b: str) -> bool:
+    (ritmo_a, team_a), (ritmo_b, team_b) = kind(a), kind(b)
+    if ritmo_a and ritmo_b and ritmo_a != ritmo_b:
+        return False
+    return team_a == team_b
 
 
 def site_from_ics(site: str) -> list[dict]:
@@ -122,13 +169,18 @@ def find_match(candidate: dict, have: list[dict], index: dict) -> dict | None:
     words = significant(candidate["title"])
     best, best_score = None, 0.0
     for t in have:
-        if t["date"] != candidate["date"]:
+        if t["date"] != candidate["date"] or not same_kind(candidate["title"], t["title"]):
             continue
         score = difflib.SequenceMatcher(
             None, normalize(candidate["title"]), normalize(t["title"])).ratio()
         # A shared distinctive word (a town, a club, an edition name) on the
-        # same date is strong evidence on its own.
-        if words and significant(t["title"]) & words:
+        # same date is strong evidence on its own. Generic words only count
+        # when nearly all of the candidate's words are in the site's title:
+        # "CD Semirrápidas Individual Jovens" in the AX Lisboa feed is the
+        # site's "Campeonato Distrital de Semirrápidas Individual Jovens AX
+        # Lisboa 2026/2027".
+        shared = words & significant(t["title"])
+        if shared - GENERIC or (words and len(shared) >= 0.75 * len(words)):
             score = max(score, SIMILARITY)
         if score > best_score:
             best, best_score = t, score

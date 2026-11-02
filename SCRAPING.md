@@ -63,7 +63,13 @@ falls back to the public `.ics`, which only lists approved ones — then
 anything pending looks missing. `--public-only` forces the fallback.
 
 Matching is deliberately loose. A false "already there" silently drops a
-tournament; a false "missing" only costs you a look.
+tournament; a false "missing" only costs you a look. Loose is not blind,
+though: a shared *generic* word ("xadrez", "jovens", "rápidas") on the same
+day proves nothing on its own — "46º Dia Xadrez Fábrica da Pólvora de
+Barcarena" once passed as the Figueira da Foz festival over "xadrez" — and
+titles naming a different ritmo, or team against individual, never match. The
+FPX holds the national Feminino de Rápidas and Feminino de Semi-Rápidas on the
+same day under near-identical titles. `tests/test_scraping.py` pins these.
 
 ### `admin_edit.py`
 
@@ -147,6 +153,20 @@ treats every one of them as optional.
 
 Time controls live in the regulation PDFs. Extract with `pdftotext -layout`.
 
+**The event page's free text can still carry last season's day.** On
+2026-11-01 the Taça Clubes Formadores page said 19 September and the Amador
+Rápidas page 7 September, both the 2025/26 days; the site took them from
+there. The tie-breaker is the FPX's own season calendar, the **Calendário
+Nacional** PDF linked from `https://fpx.pt/site/nacional/calendario`
+(2026/27: `/site/public/uploads/regulamentos/Calendario-Nacional-2026-2027.pdf`,
+read it with `pdftotext -raw`; `-layout` scrambles the rows), which agrees
+with the date on the calendar index. Check every national date against it.
+The same pages also link old regulations as placeholders (`RegCNRE21-22`,
+`Reg-CNAmador_23-24`); leave `regulation_url` empty until the season's own is
+out. Several championships share a day under near-identical titles (Feminino
+and Amador Rápidas + Semi-Rápidas, youth individual + team Rápidas) — each is
+its own entry.
+
 ### FIDE — registrations, earlier than anywhere else
 
 - `https://ratings.fide.com/a_tournaments.php?country=POR` — since October
@@ -172,8 +192,13 @@ parts are public and carried tournaments that no other source had yet:
 - **Open-tournament list:** `https://clubes.fpx.pt/listagens/lista_torneios_busca.php`,
   the FPX's homologated opens with dates, rhythm, organizer, chess-results and
   regulation links. The HTML never closes its `<tr>`/`<td>` tags, so split on
-  `<tr class=linfil>`.
-- **iCal feed:** `http://clubes.fpx.pt/fpxcalendario_ics/<oficiais>:<outras>:<flags>`,
+  `<tr class=linfil>`. As of 2026-11-01 a second table, **Provas
+  regionais**, lists association championships (the AX Viseu e Beiras youth
+  championships were only here and on FIDE). It has no PCT column, so its
+  cells sit one place to the left. Dates carry no year (`28-Nov a 01-Dez`).
+- **iCal feed:** `https://clubes.fpx.pt/fpxcalendario_ics/<oficiais>:<outras>:<flags>`
+  (plain `http://` now answers with a 301 to it; `fetch()` follows it, `curl`
+  needs `-L`),
   built by the form at `https://clubes.fpx.pt/fpxcalendario`. Each list is
   two-digit region codes from `00` (Nacionais) to `21` (Internacionais); the
   flags `J`, `V`, `F` add youth, veteran and women's events. Everything is
@@ -186,7 +211,18 @@ parts are public and carried tournaments that no other source had yet:
   mistyped: the list pointed at `ALG_2007_CDSR.pdf`, the file is
   `ALG_2027_CDSR.pdf`. Its chess-results links can be wrong too: Lagoa's
   "Dia Mundial do Xadrez" pointed at `tnr1496708`, a GXP circuit event
-  (2026-10-23). Check the title on the page you land on.
+  (2026-10-23). Check the title on the page you land on. Its ritmo codes can
+  be wrong too: the same event is marked `SR`, but its regulation says
+  5 + 3 blitz.
+- **Regulations here go stale.** The GXP circuit's copy (12 March 2026) was
+  superseded by a revised one attached to chess-results `tnr1527718`
+  (25 October 2026): new stages, moved dates, 21h30 start. For circuits,
+  read the newest regulation on chess-results and the note at the top of each
+  stage's page.
+
+Homologation asks clubs to register an event at least 15 days ahead, so the
+open-tournament list only fills in two or three weeks out — re-read it on
+every run.
 
 The 2026-10-17 run found the Philanderkas (Chaves) and Cucujães opens, the
 Setúbal and Algarve semi-rápidas championships, and the remaining dates of the
@@ -195,14 +231,20 @@ on chess-results yet.
 
 ## Coverage
 
-`gaps.py` prints a figure per source. As of the October 2026 run, against a
-site with 79 tournaments:
+`gaps.py` prints a figure per source. As of the 2026-11-01 run, before that
+run's additions, against a site with 111 published tournaments:
 
 | Source | Covered |
 | --- | --- |
-| Portugal Chess Tour | 8/8 |
-| FPX national calendar | 31/37 |
-| AX Lisboa | 7/29 |
+| Portugal Chess Tour | 7/7 |
+| FPX national calendar | 27/35 |
+| chess-results | 15/34 |
+| FIDE registrations | 33/50 |
+| AX Lisboa | 12/29 |
+
+That run added 18 tournaments and corrected 22. The sources not in the
+scripts — the FPX club list, FIDE, the GXP regulation — produced a third of
+the additions and most of the corrections.
 
 The AX Lisboa number is low because its feed carries school tournaments and
 round-by-round league fixtures that are deliberately not published here — see
@@ -289,6 +331,21 @@ Things that have actually gone wrong.
   date (03/10 instead of 31/10–07/11) and "Faro" as its location, so it showed
   as finished before it had started. When a source disagrees with what is
   published, check the regulation before assuming the source is wrong.
+- **chess-results dates can be wrong in both directions.** Jogos Desportivos
+  de Castro Daire (`tnr1495731`) was listed as upcoming on 13/11 while its page
+  already had the final standings of 20/09; it was taken off the site
+  (rejected, with an admin note). Pizzarte's 960 says 13/11 in the details
+  table and 12/11 in its own title, form and regulation. If an "upcoming"
+  page already has final standings, or the title disagrees with the details
+  table, believe the organizer's documents.
+- **Cloned chess-results entries keep old titles.** CX Sintra's 6 November
+  tournament is still called "Torneio de Outubro" on chess-results (its
+  regulation calls the series "Encontrão"). `gaps.py` then offers it as a date
+  change to the October entry, which was already played.
+- **"Escolar" in a chess-results title is a hint, not a verdict.** SCP
+  Alcântara's "Torneio Escolar Sub 08 a Sub 12" is the youth section of an
+  open event, and the Gulbenkian (Braga) event is labelled "Torneio Escolar"
+  but open to all ages. Read the regulation before leaving one out.
 
 ## What to leave out
 
@@ -327,7 +384,7 @@ day. Skip unless you have reason to think they changed.
 | gxp.pt | no usable content without a browser (2026-10-23); the GXP circuit regulation is on clubes.fpx.pt |
 | lecachessopen.com, espacomusas.pt, art-telheiras.pt, axsetubal.pt | no Events Calendar iCal feed, 404 (2026-10-23) |
 | academiaxadrezmaia.pt, gdblxadrez.pt, maiachessopen.com | domains do not resolve (2026-10-23); the Academia de Xadrez da Maia posts its regulations on chess-results |
-| Web search (postal.pt, viralagenda.com, montepio.org) | only past editions — Circuito Xadrez no Museu, Lagoa's Ibn Ammar circuit, Maia Blitz Cup; Montepio's rápidas are for members (2026-10-23) |
+| Web search (postal.pt, viralagenda.com, montepio.org) | only past editions — Circuito Xadrez no Museu, Lagoa's Ibn Ammar circuit, Maia Blitz Cup (2026-10-23). Montepio's "Atmosfera M" rápidas are **not** members-only: they are on chess-results with an open section and a FIDE-rated one, one entry (2026-11-01) |
 | ACXA (Algarve), AXRAM (Madeira), AXRAA (Açores) | no 2026/27 calendar online; ACXA's championship regulation is on clubes.fpx.pt |
 | AXDC, Leiria, Guarda, Castelo Branco, Santarém | no calendar online |
 | Municipal agendas, juntas de freguesia, local press | almost nothing; not worth a sweep. Matosinhos' sports agenda did list the GD Basquete de Leça open (2026-10-17) |

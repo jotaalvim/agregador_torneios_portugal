@@ -21,6 +21,7 @@ from fetch_sources import (  # noqa: E402
     parse_ical,
     tidy_location,
 )
+from gaps import find_match, significant  # noqa: E402
 from scrape_chess_results import normalize_title, parse_time_control  # noqa: E402
 
 
@@ -244,3 +245,46 @@ def test_normalize_title_ignores_case_accents_and_punctuation():
 
 def test_normalize_title_still_separates_different_tournaments():
     assert normalize_title("CD Equipas Rápidas") != normalize_title("CD Equipas Semi-Rápidas")
+
+
+# --- gaps.py matching -------------------------------------------------------
+#
+# A false "already on the site" silently drops a tournament. Each case below
+# once did exactly that.
+
+def _match(title: str, site_title: str, day: str = "2026-11-08") -> dict | None:
+    return find_match({"title": title, "date": day}, [{"title": site_title, "date": day}], {})
+
+
+def test_significant_keeps_accented_words_whole():
+    # FIDE writes it without the accent, the site with it
+    assert "cucujaes" in significant("44º Torneio Aberto de Xadrez da Vila de Cucujães – Memorial António Pinho")
+    assert "cucujaes" in significant("XLIV Torneio Aberto de Cucujaes")
+
+
+@pytest.mark.parametrize("title,site_title", [
+    ("XLIV Torneio Aberto de Cucujaes",
+     "44º Torneio Aberto de Xadrez da Vila de Cucujães – Memorial António Pinho"),
+    # nothing distinctive, but every word of the feed's title is in the site's
+    ("CD Semirrápidas Individual Jovens",
+     "Campeonato Distrital de Semirrápidas Individual Jovens AX Lisboa 2026/2027"),
+    # FIDE registers one event per age group
+    ("CN Jovens 2026-27 - U08", "Campeonato Nacional de Jovens Sub-08 a Sub-20 2026/2027"),
+])
+def test_find_match_still_catches_a_retitled_tournament(title, site_title):
+    assert _match(title, site_title)
+
+
+@pytest.mark.parametrize("title,site_title", [
+    # nothing in common but "xadrez"
+    ("46º Dia Xadrez Fábrica da Pólvora de Barcarena - OPEN (08/11 - 15h00/18h30)",
+     "XX Festival Internacional de Xadrez da Figueira da Foz – Torneio Sabir Ali"),
+    # same day, same title but for the ritmo
+    ("AMPEONATO NACIONAL FEMININO DE PARTIDAS SEMI-RÁPIDAS 2026/2027",
+     "Campeonato Nacional Feminino de Rápidas 2026/2027"),
+    # the team championship and the individual one, same day
+    ("CAMPEONATO NACIONAL DE JOVENS, Sub-08 a Sub-20, DE PARTIDAS RÁPIDAS POR EQUIPAS 2026/2027",
+     "Campeonato Nacional de Jovens Sub-08 a Sub-20 de Rápidas 2026/2027"),
+])
+def test_find_match_keeps_different_tournaments_apart(title, site_title):
+    assert _match(title, site_title) is None
