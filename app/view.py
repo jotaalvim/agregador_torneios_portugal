@@ -130,14 +130,20 @@ def ritmo_of(time_control: str) -> str | None:
     return "classicas"
 
 
+# Opens every shared text, so tournaments pasted one after another in a chat
+# stay apart.
+SHARE_SEPARATOR = "-" * 33
+
+
 def share_text(t: Tournament, page_url: str | None = None) -> str:
     """Plain-text summary formatted for sharing (WhatsApp, clipboard, etc):
-    date/district/title on the first line, then ritmo and whichever links
-    are actually set, each on its own line. `page_url` is the tournament's
-    own absolute URL, provided by the caller since view.py has no access
-    to the request/domain."""
-    date_short = f"{t.date.day} {MONTH_NAMES_PT[t.date.month - 1].capitalize()}"
-    lines = [f"{date_short} - {t.district} | {t.title}", t.time_control]
+    a separator line, date (with weekday)/district/title, then ritmo and
+    whichever links are actually set, one per line.
+    `page_url` is the tournament's own absolute URL, provided by the caller
+    since view.py has no access to the request/domain."""
+    date_short = (f"{t.date.day} {MONTH_NAMES_PT[t.date.month - 1].capitalize()} "
+                  f"({WEEKDAYS_LONG_PT[t.date.weekday()]})")
+    lines = [SHARE_SEPARATOR, f"{date_short} - {t.district} | {t.title}", t.time_control]
     if t.registration_url:
         lines.append(f"inscrição online: {t.registration_url}")
     if t.regulation_url:
@@ -146,7 +152,7 @@ def share_text(t: Tournament, page_url: str | None = None) -> str:
         lines.append(f"lista participantes: {t.chess_results_url}")
     if page_url:
         lines.append(f"página: {page_url}")
-    return "\n\n".join(lines)
+    return "\n".join(lines)
 
 
 def event_schema(t: Tournament, page_url: str, image_url: str) -> dict | None:

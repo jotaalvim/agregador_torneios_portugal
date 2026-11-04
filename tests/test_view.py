@@ -11,6 +11,7 @@ from app.view import (
     event_schema,
     google_calendar_url,
     ritmo_of,
+    share_text,
     time_control_display,
     time_control_html,
 )
@@ -116,6 +117,19 @@ def test_google_calendar_url_fills_in_the_tournament():
     assert (query["text"], query["location"]) == (["Open de Teste"], ["Pavilhão Municipal, Braga"])
     assert query["dates"] == ["20270501/20270502"]  # all day: the end is exclusive
     assert query["details"] == ["Ritmo: 90 + 30 (Clássicas)\nhttps://site/torneios/1"]
+
+
+def test_share_text_one_line_per_item_with_weekday_and_separator():
+    t = Tournament(title="Open de Teste", district="Braga", date=date(2026, 11, 7),
+                   location="Pavilhão Municipal, Braga", time_control="3 + 2",
+                   regulation_url="https://site/reg.pdf")
+    assert share_text(t, "https://site/torneios/1") == (
+        "---------------------------------\n"
+        "7 Novembro (sábado) - Braga | Open de Teste\n"
+        "3 + 2\n"
+        "regulamento: https://site/reg.pdf\n"
+        "página: https://site/torneios/1"
+    )
 
 
 def test_ics_fold_keeps_lines_short_and_characters_whole():
