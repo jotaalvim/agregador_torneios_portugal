@@ -368,30 +368,35 @@ offering both.
 
 ## Dead ends
 
-Checked October 2026, nothing current; rows with a date were re-checked that
-day. Skip unless you have reason to think they changed.
+Every row was re-checked on 2026-11-04 unless it carries another date. Skip
+them unless you have reason to think they changed.
 
 | Source | State |
 | --- | --- |
-| chessmanager.com | tournament search still returns 403 to scripts (2026-10-23) |
-| tornelo.com, chess.com/events, lichess broadcasts | nothing for Portugal OTB; tornelo now returns 200 but is a JavaScript shell with no listings (2026-10-23) |
-| chess-calendar.eu | now returns 200, but only re-lists chess-results and FIDE (2026-10-23) |
-| clubes.fpx.pt | login-only, **except** the open-tournament list and iCal feed (see Sources, 2026-10-17) |
-| axaveiro.pt | now times out (2026-10-23) |
-| xadrez64.com | connection times out (2026-10-23) |
-| axbraga.weebly.com | last updated 2018 (2026-10-23) |
-| axporto.weebly.com | calendar stops at 2024/25 (2026-10-23); AXP's 2026/27 regulations are on clubes.fpx.pt |
-| gxp.pt | no usable content without a browser (2026-10-23); the GXP circuit regulation is on clubes.fpx.pt |
-| lecachessopen.com, espacomusas.pt, art-telheiras.pt, axsetubal.pt | no Events Calendar iCal feed, 404 (2026-10-23) |
-| academiaxadrezmaia.pt, gdblxadrez.pt, maiachessopen.com | domains do not resolve (2026-10-23); the Academia de Xadrez da Maia posts its regulations on chess-results |
-| Web search (postal.pt, viralagenda.com, montepio.org) | only past editions — Circuito Xadrez no Museu, Lagoa's Ibn Ammar circuit, Maia Blitz Cup (2026-10-23). Montepio's "Atmosfera M" rápidas are **not** members-only: they are on chess-results with an open section and a FIDE-rated one, one entry (2026-11-01) |
-| ACXA (Algarve), AXRAM (Madeira), AXRAA (Açores) | no 2026/27 calendar online; ACXA's championship regulation is on clubes.fpx.pt |
-| AXDC, Leiria, Guarda, Castelo Branco, Santarém | no calendar online |
+| chessmanager.com | tournament search still returns 403 to scripts |
+| tornelo.com, chess.com/events, lichess broadcasts | nothing for Portugal OTB; tornelo is a JavaScript shell with no listings; lichess's `/api/broadcast` only had the Lagos open |
+| chess-calendar.eu | only re-lists chess-results and FIDE |
+| clubes.fpx.pt | login-only, **except** the open-tournament list, the iCal feed and regulation files by exact name (see Sources); `/listagens/` and `/provas/*/` directory listings are 403 (2026-11-01) |
+| axaveiro.pt | resolves again, but is a "Página em construção" placeholder with no iCal |
+| xadrez64.com | DNS resolves, connection times out |
+| axbraga.weebly.com | last updated 2018 |
+| axporto.weebly.com | calendar stops at 2024/25; AXP's 2026/27 regulations are on clubes.fpx.pt |
+| gxp.pt | JavaScript shell; the GXP circuit regulation is attached to its chess-results pages |
+| lecachessopen.com, espacomusas.pt, art-telheiras.pt | no Events Calendar iCal (404), nothing upcoming |
+| academiaxadrezmaia.pt, gdblxadrez.pt, maiachessopen.com | domains do not resolve; the Academia de Xadrez da Maia posts its regulations on chess-results |
+| Web search (postal.pt, viralagenda.com, montepio.org) | mostly past editions, but worth one pass: postal.pt carried the Alte open (14/11) and Viral Agenda's `/pt/tags/xadrez` the FNAC Aveiro event (7/11) before anywhere else but chess-results. Montepio's "Atmosfera M" rápidas are **not** members-only: they are on chess-results with an open section and a FIDE-rated one, one entry (2026-11-01) |
+| ACXA (Algarve), AXRAA (Açores) | no site, no 2026/27 calendar; ACXA's championship regulation is on clubes.fpx.pt |
+| AXRAM (Madeira) | has a site now, `https://www.axram.org/`, but its calendar is a 2025/26 image |
+| AXDC, Leiria, Guarda, Castelo Branco, Santarém | no site or calendar found |
 | Municipal agendas, juntas de freguesia, local press | almost nothing; not worth a sweep. Matosinhos' sports agenda did list the GD Basquete de Leça open (2026-10-17) |
 
-The AX Setúbal 2026/27 calendar PDF exists but its table is misaligned
-(17 events against 14 dates) — don't trust rows read out of it without
-cross-checking each one.
+**No longer a dead end: AX Setúbal.** `https://www.axsetubal.pt/calendarios.html`
+lists the whole season row by row with its "última atualização" date — the
+2026/27 district championships went on the site from it on 2026-11-04. It
+gives no time controls: the previous season's regulations
+(`clubes.fpx.pt/provas/regulamentos/SET_<year>_<code>.pdf`) do. It also
+explains the PDF's misaligned table: morning and afternoon events share a
+date. Still no iCal feed.
 
 **When re-checking these, note the date here.** A dead-ends list with no dates
 rots into "check everything again".
