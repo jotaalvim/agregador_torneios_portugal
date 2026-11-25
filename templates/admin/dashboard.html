@@ -39,7 +39,23 @@
 <p class="empty">Sem submissões pendentes.</p>
 {% endif %}
 
-<h2>Correções pendentes ({{ corrections|length }})</h2>
+<div class="section-head admin-section-head">
+  <h2>Correções pendentes ({{ corrections|length }})</h2>
+  {% if acceptable %}
+  {# Lists the corrections shown here, so one sent after the page loaded is
+     never accepted unseen. Those left out need the review page: cancelled,
+     only a note, or edited after the suggestion. #}
+  <form method="post" action="/admin/correcoes/aceitar" class="inline"
+        onsubmit="return confirm('Aplicar {{ acceptable|length }} {{ 'correção' if acceptable|length == 1 else 'correções' }} aos torneios?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    {% for item in acceptable %}<input type="hidden" name="id" value="{{ item.c.id }}">{% endfor %}
+    <button type="submit" class="btn"{% if acceptable|length < corrections|length %} title="As outras precisam de ser revistas: canceladas, só com nota, ou o torneio mudou depois."{% endif %}>
+      {% if acceptable|length == corrections|length %}Aceitar todas{% else %}Aceitar {{ acceptable|length }} de {{ corrections|length }}{% endif %}
+    </button>
+  </form>
+  {% endif %}
+</div>
+{% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}
 {% if corrections %}
 <div class="table-scroll">
 <table class="data-table">
@@ -66,6 +82,13 @@
       <td data-label="Enviada por">{{ c.submitted_by_name or "-" }}{% if c.submitted_by_email %} &middot; {{ c.submitted_by_email }}{% endif %}</td>
       <td class="actions" data-label="Ações">
         <a href="/admin/correcoes/{{ c.id }}">rever</a>
+        {% if item.acceptable %}
+        <form method="post" action="/admin/correcoes/aceitar" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="id" value="{{ c.id }}">
+          <button type="submit" class="link-btn approve">aceitar</button>
+        </form>
+        {% endif %}
         <form method="post" action="/admin/correcoes/{{ c.id }}/reject" class="inline" onsubmit="return confirm('Rejeitar esta correção?');">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <button type="submit" class="link-btn reject">rejeitar</button>

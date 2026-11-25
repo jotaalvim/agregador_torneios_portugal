@@ -646,12 +646,19 @@ def admin_new_post(
 @app.get("/admin", response_class=HTMLResponse, dependencies=[Depends(require_admin)])
 def admin_dashboard(request: Request, db: Session = Depends(get_db)):
     corrections = [
-        {"c": c, "t": c.tournament, "changes": view.correction_changes(c, c.tournament)}
+        {
+            "c": c,
+            "t": c.tournament,
+            "changes": view.correction_changes(c, c.tournament),
+            "acceptable": view.correction_updates(c, c.tournament) is not None,
+        }
         for c in crud.list_pending_corrections(db)
     ]
     ctx = base_ctx(db, request) | {
+        "notice": request.session.pop("admin_notice", None),
         "pending": crud.list_pending(db),
         "corrections": corrections,
+        "acceptable": [item for item in corrections if item["acceptable"]],
         "all_tournaments": crud.list_all(db),
         "csrf_token": get_csrf_token(request),
     }
@@ -827,6 +834,59 @@ def _close_correction(db: Session, request: Request, correction_id: int, csrf_to
         raise HTTPException(status_code=404)
     if c.status == CorrectionStatus.pending:
         crud.set_correction_status(db, c, status)
+    return RedirectResponse("/admin", status_code=303)
+
+
+def accept_correction(db: Session, c: Correction) -> bool:
+    """Write a pending correction's suggestion as it stands and close it, as
+    saving its review page unchanged would. Only the fields it changes are
+    written. False, leaving it pending, when it needs the review page."""
+    if not crud.correction_belongs(c):
+        return False
+    t = c.tournament
+    updates = view.correction_updates(c, t)
+    if updates is None:
+        return False
+    # Only the fields it changes may block it, as on the public form: an old
+    # bad value elsewhere is not this correction's to fix.
+    if any(field in updates for field in validate_submission(view.edit_values(t) | updates)):
+        return False
+    data = {}
+    for name, value in updates.items():
+        if name == "date":
+            data[name] = date.fromisoformat(value)
+        elif name in REQUIRED_FIELDS:
+            data[name] = value
+        else:
+            data[name] = value or None
+    crud.update_tournament(db, t, data)
+    crud.set_correction_status(db, c, CorrectionStatus.resolved)
+    return True
+
+
+@app.post("/admin/correcoes/aceitar", dependencies=[Depends(require_admin)])
+def admin_corrections_accept(request: Request, db: Session = Depends(get_db), form: FormData = Depends(read_form)):
+    """Accept the corrections listed (one per `id`) straight from the
+    dashboard. The form lists the ones the admin saw, so a correction sent
+    after the page loaded is never accepted unseen. They are applied in
+    order, so of two that touch the same field the later one is left for
+    review unless it suggests the same value."""
+    token = form.get("csrf_token")
+    verify_csrf(request, token if isinstance(token, str) else "")
+    ids = [int(v) for v in form.getlist("id") if isinstance(v, str) and v.strip().isdigit()]
+    accepted = skipped = 0
+    for correction_id in ids:
+        c = crud.get_correction(db, correction_id)
+        if c is None or c.status != CorrectionStatus.pending:
+            continue
+        if accept_correction(db, c):
+            accepted += 1
+        else:
+            skipped += 1
+    notice = f"{accepted} {'correção aceite' if accepted == 1 else 'correções aceites'}."
+    if skipped:
+        notice += f" {skipped} {'ficou por aceitar: abre-a' if skipped == 1 else 'ficaram por aceitar: abre-as'} em rever."
+    request.session["admin_notice"] = notice
     return RedirectResponse("/admin", status_code=303)
 
 

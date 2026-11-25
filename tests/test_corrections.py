@@ -578,3 +578,111 @@ def test_edit_form_shows_description_errors(client):
     r = client.post(f"/admin/tournaments/{tid}/edit", data=form)
     assert r.status_code == 400
     assert "Máximo de 5000 caracteres." in r.text
+
+
+# --- accepting from the dashboard ---------------------------------------------
+
+
+def accept(client: TestClient, *ids: int, token: str | None = None):
+    return client.post("/admin/correcoes/aceitar",
+                       data={"csrf_token": token or admin_csrf(client), "id": [str(i) for i in ids]},
+                       follow_redirects=False)
+
+
+def bulk_ids(client: TestClient) -> list[int]:
+    """The correction ids the dashboard's "Aceitar todas" button sends."""
+    page = client.get("/admin").text
+    form = re.search(r'<form method="post" action="/admin/correcoes/aceitar" class="inline"\s+onsubmit=.*?</form>', page, re.S)
+    return [int(i) for i in re.findall(r'name="id" value="(\d+)"', form.group(0))] if form else []
+
+
+def test_accept_from_the_dashboard_applies_the_suggestion(client):
+    tid = make_tournament(location="Sala Antiga, Braga", date=date(2027, 5, 1), organizer="Clube Errado")
+    suggest(client, tid, location="Sala Nova, Braga", date="2027-05-08", organizer="")
+    [c] = corrections_for(tid)
+
+    login(client)
+    assert "aceitar</button>" in dashboard_row(client, c["id"])
+    assert c["id"] in bulk_ids(client)
+    r = accept(client, c["id"])
+    assert r.status_code == 303 and r.headers["location"] == "/admin"
+
+    t = get_tournament(tid)
+    assert (t.location, t.date, t.organizer) == ("Sala Nova, Braga", date(2027, 5, 8), None)
+    # Fields the correction did not touch are left exactly as they were.
+    assert t.description == "Linha um\nLinha dois"
+    assert (t.status, t.time_control) == (Status.approved, "90 + 30")
+    assert corrections_for(tid)[0]["status"] == CorrectionStatus.resolved
+
+    page = client.get("/admin").text
+    assert "1 correção aceite." in page
+    assert f"/admin/correcoes/{c['id']}\"" not in page
+    assert "1 correção aceite." not in client.get("/admin").text  # shown once
+
+
+def test_corrections_that_need_a_review_have_no_accept_button(client):
+    tid = make_tournament(location="Sala Antiga, Braga", time_control="90 + 30")
+    suggest(client, tid, note="So uma nota.")
+    suggest(client, tid, time_control="60 + 30", cancelled="1")
+    suggest(client, tid, location="Sala Nova, Braga")
+    note, cancelled, stale = corrections_for(tid)
+    update_tournament(tid, location="Sala Intermedia, Braga")
+
+    login(client)
+    in_bulk = bulk_ids(client)
+    for c in (note, cancelled, stale):
+        assert "aceitar</button>" not in dashboard_row(client, c["id"])
+        assert c["id"] not in in_bulk
+
+    # Even if sent anyway, they stay pending and the tournament is untouched.
+    accept(client, note["id"], cancelled["id"], stale["id"])
+    assert [c["status"] for c in corrections_for(tid)] == [CorrectionStatus.pending] * 3
+    t = get_tournament(tid)
+    assert (t.location, t.time_control) == ("Sala Intermedia, Braga", "90 + 30")
+    assert "0 correções aceites. 3 ficaram por aceitar: abre-as em rever." in client.get("/admin").text
+
+
+def test_accepting_several_applies_them_in_order(client):
+    a = make_tournament(location="Sala A, Braga")
+    b = make_tournament(time_control="90 + 30")
+    suggest(client, a, location="Sala A2, Braga")
+    suggest(client, a, location="Sala A3, Braga")  # same field, other value: needs a review
+    suggest(client, b, time_control="60 + 30")
+    suggest(client, b, time_control="60 + 30")  # same fix twice: closed with the first
+    a1, a2 = corrections_for(a)
+    b1, b2 = corrections_for(b)
+
+    login(client)
+    assert {a1["id"], a2["id"], b1["id"], b2["id"]} <= set(bulk_ids(client))
+    accept(client, a1["id"], a2["id"], b1["id"], b2["id"])
+
+    assert get_tournament(a).location == "Sala A2, Braga"
+    assert get_tournament(b).time_control == "60 + 30"
+    assert [c["status"] for c in corrections_for(a)] == [CorrectionStatus.resolved, CorrectionStatus.pending]
+    assert [c["status"] for c in corrections_for(b)] == [CorrectionStatus.resolved] * 2
+    assert "3 correções aceites. 1 ficou por aceitar: abre-a em rever." in client.get("/admin").text
+
+
+def test_accept_leaves_closed_corrections_alone(client):
+    tid = make_tournament(location="Sala Antiga, Braga")
+    suggest(client, tid, location="Sala Errada, Braga")
+    [c] = corrections_for(tid)
+    login(client)
+    token = admin_csrf(client)
+    client.post(f"/admin/correcoes/{c['id']}/reject", data={"csrf_token": token}, follow_redirects=False)
+    accept(client, c["id"], token=token)
+    assert corrections_for(tid)[0]["status"] == CorrectionStatus.rejected
+    assert get_tournament(tid).location == "Sala Antiga, Braga"
+
+
+def test_accept_needs_login_and_csrf(client):
+    tid = make_tournament(location="Sala Antiga, Braga")
+    suggest(client, tid, location="Sala Nova, Braga")
+    [c] = corrections_for(tid)
+
+    r = client.post("/admin/correcoes/aceitar", data={"csrf_token": "x", "id": str(c["id"])}, follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/admin/login"
+    login(client)
+    assert accept(client, c["id"], token="bogus").status_code == 400
+    assert corrections_for(tid)[0]["status"] == CorrectionStatus.pending
+    assert get_tournament(tid).location == "Sala Antiga, Braga"

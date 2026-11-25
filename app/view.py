@@ -521,6 +521,27 @@ def review_values(t: Tournament, c: Correction) -> dict:
     return values
 
 
+def correction_updates(c: Correction, t: Tournament) -> dict | None:
+    """What accepting a correction from the dashboard writes, without the
+    review page: {field: suggested value}. None when it needs the review:
+    it is closed, says the tournament was cancelled, changes no field (only
+    a note), or one of its fields was edited after the suggestion to
+    something else than it suggests. A field that already holds the
+    suggested value (two visitors sent the same fix) is fine."""
+    if c.status != CorrectionStatus.pending or c.cancelled:
+        return None
+    current = edit_values(t)
+    updates = {}
+    for name, change in (c.changes or {}).items():
+        if name not in FIELD_LABELS:
+            continue
+        old, new = change.get("old", ""), change.get("new", "")
+        if normalize_field(name, current[name]) not in (old, new):
+            return None
+        updates[name] = new
+    return updates or None
+
+
 def edit_version(t: Tournament) -> str:
     """Fingerprint of the tournament as the edit form loads it. The form
     posts it back, so saving a page opened before another save (a second
